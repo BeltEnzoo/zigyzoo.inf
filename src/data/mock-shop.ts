@@ -27,11 +27,23 @@ const IMG = {
 } as const;
 
 const mockCategories: Category[] = [
-  { id: "mock-cat-remeras", name: "Remeras", slug: "remeras", sort_order: 1 },
-  { id: "mock-cat-pantalones", name: "Pantalones", slug: "pantalones", sort_order: 2 },
-  { id: "mock-cat-vestidos", name: "Vestidos", slug: "vestidos", sort_order: 3 },
-  { id: "mock-cat-buzos", name: "Buzos", slug: "buzos", sort_order: 4 },
-  { id: "mock-cat-accesorios", name: "Accesorios", slug: "accesorios", sort_order: 5 },
+  { id: "mock-cat-remeras", name: "Remeras", slug: "remeras", sort_order: 1, color_hex: null },
+  {
+    id: "mock-cat-pantalones",
+    name: "Pantalones",
+    slug: "pantalones",
+    sort_order: 2,
+    color_hex: null,
+  },
+  { id: "mock-cat-vestidos", name: "Vestidos", slug: "vestidos", sort_order: 3, color_hex: null },
+  { id: "mock-cat-buzos", name: "Buzos", slug: "buzos", sort_order: 4, color_hex: null },
+  {
+    id: "mock-cat-accesorios",
+    name: "Accesorios",
+    slug: "accesorios",
+    sort_order: 5,
+    color_hex: null,
+  },
 ];
 
 const mockList: ProductListItem[] = [

@@ -11,6 +11,7 @@ type ProductRow = {
   currency: string;
   is_active: boolean;
   categories: Category | null;
+  categories_all?: Category[];
   product_images: { id: string; url: string; sort_order: number }[];
   product_variants: {
     id: string;
@@ -35,6 +36,7 @@ function normalizeListRow(r: ProductRow): ProductListItem {
     currency: r.currency,
     is_active: r.is_active,
     categories: r.categories,
+    categories_all: Array.isArray(r.categories_all) ? r.categories_all : [],
     product_images: Array.isArray(r.product_images) ? r.product_images : [],
     product_variants: Array.isArray(r.product_variants) ? r.product_variants : [],
   };
@@ -53,6 +55,7 @@ function normalizeDetailRow(r: ProductRow): ProductDetail {
     currency: r.currency,
     is_active: r.is_active,
     categories: r.categories,
+    categories_all: Array.isArray(r.categories_all) ? r.categories_all : [],
     product_images: images.map((i) => ({
       id: i.id,
       product_id: r.id,
@@ -73,7 +76,7 @@ function normalizeDetailRow(r: ProductRow): ProductDetail {
 export async function dbGetCategories(): Promise<Category[]> {
   const sql = getSql()!;
   const rows = await sql`
-    select id, name, slug, sort_order
+    select id, name, slug, sort_order, color_hex
     from categories
     order by sort_order asc
   `;
@@ -113,8 +116,35 @@ export async function dbGetProducts(opts: {
         'id', c.id::text,
         'name', c.name,
         'slug', c.slug,
-        'sort_order', c.sort_order
+        'sort_order', c.sort_order,
+        'color_hex', c.color_hex
       ) end as categories,
+      coalesce(
+        (
+          select json_agg(
+            json_build_object(
+              'id', cx.id::text,
+              'name', cx.name,
+              'slug', cx.slug,
+              'sort_order', cx.sort_order,
+              'color_hex', cx.color_hex
+            )
+            order by cx.sort_order, cx.name
+          )
+          from product_categories pc
+          join categories cx on cx.id = pc.category_id
+          where pc.product_id = p.id
+        ),
+        case when c.id is not null then json_build_array(
+          json_build_object(
+            'id', c.id::text,
+            'name', c.name,
+            'slug', c.slug,
+            'sort_order', c.sort_order,
+            'color_hex', c.color_hex
+          )
+        ) else '[]'::json end
+      ) as categories_all,
       coalesce(
         (
           select json_agg(
@@ -142,7 +172,14 @@ export async function dbGetProducts(opts: {
     from products p
     left join categories c on c.id = p.category_id
     where (${includeInactive} or p.is_active = true)
-      and (not ${hasCat} or p.category_id = ${categoryId}::uuid)
+      and (
+        not ${hasCat}
+        or p.category_id = ${categoryId}::uuid
+        or exists (
+          select 1 from product_categories pc
+          where pc.product_id = p.id and pc.category_id = ${categoryId}::uuid
+        )
+      )
     order by p.name asc
   `;
 
@@ -168,8 +205,35 @@ export async function dbGetProductBySlug(
         'id', c.id::text,
         'name', c.name,
         'slug', c.slug,
-        'sort_order', c.sort_order
+        'sort_order', c.sort_order,
+        'color_hex', c.color_hex
       ) end as categories,
+      coalesce(
+        (
+          select json_agg(
+            json_build_object(
+              'id', cx.id::text,
+              'name', cx.name,
+              'slug', cx.slug,
+              'sort_order', cx.sort_order,
+              'color_hex', cx.color_hex
+            )
+            order by cx.sort_order, cx.name
+          )
+          from product_categories pc
+          join categories cx on cx.id = pc.category_id
+          where pc.product_id = p.id
+        ),
+        case when c.id is not null then json_build_array(
+          json_build_object(
+            'id', c.id::text,
+            'name', c.name,
+            'slug', c.slug,
+            'sort_order', c.sort_order,
+            'color_hex', c.color_hex
+          )
+        ) else '[]'::json end
+      ) as categories_all,
       coalesce(
         (
           select json_agg(

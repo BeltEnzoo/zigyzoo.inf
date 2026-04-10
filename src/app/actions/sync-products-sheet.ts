@@ -9,6 +9,12 @@ type RowMap = Record<string, string>;
 
 const DEFAULT_SHEET_ID = "1u_Zhj0dOpXNtVnRcYwJSLmvJysbz5gvxc4n5R-FwZJQ";
 const DEFAULT_GID = "0";
+const CATEGORY_COLOR_BY_SLUG: Record<string, string> = {
+  bebes: "#C08081",
+  "juegos-juguetes-aire-libre": "#1DB40F",
+  "juegos-juguetes-aprendizaje-ingenio": "#BC31DE",
+  maternidad: "#FFEB5C",
+};
 
 function slugify(s: string) {
   return s
@@ -146,6 +152,8 @@ export async function syncProductsFromGoogleSheet() {
     const currency = (pick(row, "currency") || "ARS").toUpperCase();
     const isActiveRaw = pick(row, "is_active", "isactive", "is_active");
     const categorySlugRaw = pick(row, "category_slug", "categoryslug");
+    const categorySlugsRaw = pick(row, "category_slugs", "categoryslugs");
+    const categoryColorRaw = pick(row, "category_color", "categorycolor", "color_hex");
     const sizesRaw = pick(row, "sizes");
     const stocksRaw = pick(row, "stocks");
     const imageUrlsRaw = pick(row, "image_urls", "imageurls");
@@ -162,18 +170,41 @@ export async function syncProductsFromGoogleSheet() {
     }
 
     const isActive = !["0", "false", "no", "n"].includes(isActiveRaw.toLowerCase());
-    const categorySlug = categorySlugRaw ? slugify(categorySlugRaw) : "";
+    const categorySlugCandidates = (categorySlugsRaw || categorySlugRaw)
+      .split(/[;|,]/)
+      .map((s) => slugify(s))
+      .filter(Boolean);
+    const categorySlugs = [...new Set(categorySlugCandidates)];
     let categoryId: string | null = null;
+    const categoryIds: string[] = [];
 
     try {
-      if (categorySlug) {
-        const c = await sql`
-          insert into categories (name, slug)
-          values (${titleFromSlug(categorySlug)}, ${categorySlug})
-          on conflict (slug) do update set name = excluded.name
-          returning id
-        `;
-        categoryId = (c[0] as { id: string } | undefined)?.id ?? null;
+      if (categorySlugs.length) {
+        const categoryColor =
+          (categoryColorRaw && /^#[0-9a-fA-F]{6}$/.test(categoryColorRaw)
+            ? categoryColorRaw
+            : CATEGORY_COLOR_BY_SLUG[categorySlugs[0]]) ?? null;
+
+        for (let ci = 0; ci < categorySlugs.length; ci++) {
+          const slugCat = categorySlugs[ci];
+          const thisColor =
+            ci === 0
+              ? categoryColor
+              : (CATEGORY_COLOR_BY_SLUG[slugCat] ?? null);
+          const c = await sql`
+            insert into categories (name, slug, color_hex)
+            values (${titleFromSlug(slugCat)}, ${slugCat}, ${thisColor})
+            on conflict (slug) do update set
+              name = excluded.name,
+              color_hex = coalesce(excluded.color_hex, categories.color_hex)
+            returning id
+          `;
+          const cid = (c[0] as { id: string } | undefined)?.id ?? null;
+          if (cid) {
+            if (!categoryId) categoryId = cid;
+            categoryIds.push(cid);
+          }
+        }
       }
 
       const existing = await sql`select id from products where slug = ${slug} limit 1`;
@@ -216,6 +247,15 @@ export async function syncProductsFromGoogleSheet() {
             values (${productId}::uuid, ${sizes[v]}, ${stocks[v]}, ${v})
           `;
         }
+      }
+
+      await sql`delete from product_categories where product_id = ${productId}::uuid`;
+      for (let ci = 0; ci < categoryIds.length; ci++) {
+        await sql`
+          insert into product_categories (product_id, category_id)
+          values (${productId}::uuid, ${categoryIds[ci]}::uuid)
+          on conflict do nothing
+        `;
       }
 
       const imageUrls = imageUrlsRaw

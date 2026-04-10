@@ -3,6 +3,7 @@ export type Category = {
   name: string;
   slug: string;
   sort_order: number;
+  color_hex: string | null;
 };
 
 export type Product = {
@@ -34,12 +35,14 @@ export type ProductImage = {
 
 export type ProductListItem = Product & {
   categories: Category | null;
+  categories_all?: Category[];
   product_images: Pick<ProductImage, "id" | "url" | "sort_order">[];
   product_variants: Pick<ProductVariant, "id" | "stock" | "size_label">[];
 };
 
 export type ProductDetail = Product & {
   categories: Category | null;
+  categories_all?: Category[];
   product_images: ProductImage[];
   product_variants: ProductVariant[];
 };

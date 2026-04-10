@@ -17,6 +17,7 @@ create table if not exists public.categories (
   id uuid primary key default gen_random_uuid(),
   name text not null,
   slug text not null unique,
+  color_hex text check (color_hex ~ '^#[0-9A-Fa-f]{6}$'),
   sort_order int not null default 0,
   created_at timestamptz not null default now()
 );
@@ -51,10 +52,19 @@ create table if not exists public.product_images (
   sort_order int not null default 0
 );
 
+create table if not exists public.product_categories (
+  product_id uuid not null references public.products (id) on delete cascade,
+  category_id uuid not null references public.categories (id) on delete cascade,
+  created_at timestamptz not null default now(),
+  primary key (product_id, category_id)
+);
+
 create index if not exists idx_products_category on public.products (category_id);
 create index if not exists idx_products_active on public.products (is_active);
 create index if not exists idx_variants_product on public.product_variants (product_id);
 create index if not exists idx_images_product on public.product_images (product_id);
+create index if not exists idx_prod_cat_category on public.product_categories (category_id);
+create index if not exists idx_prod_cat_product on public.product_categories (product_id);
 
 create or replace function public.set_updated_at()
 returns trigger as $$
@@ -75,8 +85,17 @@ insert into public.categories (name, slug, sort_order)
 values
   ('Remeras', 'remeras', 1),
   ('Pantalones', 'pantalones', 2),
-  ('Vestidos', 'vestidos', 3)
+  ('Vestidos', 'vestidos', 3),
+  ('Bebés', 'bebes', 4),
+  ('Juegos y Juguetes al Aire Libre', 'juegos-juguetes-aire-libre', 5),
+  ('Juegos y Juguetes de Aprendizaje e Ingenio', 'juegos-juguetes-aprendizaje-ingenio', 6),
+  ('Maternidad', 'maternidad', 7)
 on conflict (slug) do nothing;
+
+update public.categories set color_hex = '#C08081' where slug = 'bebes';
+update public.categories set color_hex = '#1DB40F' where slug = 'juegos-juguetes-aire-libre';
+update public.categories set color_hex = '#BC31DE' where slug = 'juegos-juguetes-aprendizaje-ingenio';
+update public.categories set color_hex = '#FFEB5C' where slug = 'maternidad';
 
 -- Primer usuario admin (reemplazá el hash; generá uno con Node):
 -- node -e "console.log(require('bcryptjs').hashSync('TU_CONTRASEÑA', 10))"

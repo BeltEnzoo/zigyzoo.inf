@@ -64,10 +64,19 @@ export default async function ProductoPage({ params }: Props) {
           </div>
 
           <div>
-            {product.categories && (
-              <p className="text-sm font-medium uppercase tracking-wide text-foreground/55">
-                {product.categories.name}
-              </p>
+            {(product.categories_all?.length || product.categories) && (
+              <div className="flex flex-wrap gap-2">
+                {(product.categories_all?.length ? product.categories_all : [product.categories!]).map(
+                  (cat) => (
+                    <span
+                      key={cat.id}
+                      className="rounded-full border border-black/10 px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide text-foreground/65"
+                    >
+                      {cat.name}
+                    </span>
+                  ),
+                )}
+              </div>
             )}
             <h1 className="mt-2 font-display text-3xl font-bold text-brand sm:text-4xl">
               {product.name}

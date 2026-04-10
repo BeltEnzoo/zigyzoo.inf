@@ -18,6 +18,12 @@ export function ProductCard({ product }: { product: ProductListItem }) {
   const img = firstImage(product);
   const stock = totalStock(product);
   const available = stock > 0;
+  const categoryList =
+    product.categories_all && product.categories_all.length
+      ? product.categories_all
+      : product.categories
+        ? [product.categories]
+        : [];
 
   return (
     <article className="group flex flex-col overflow-hidden rounded-3xl border border-black/5 bg-white shadow-sm transition hover:shadow-md">
@@ -45,10 +51,22 @@ export function ProductCard({ product }: { product: ProductListItem }) {
         )}
       </Link>
       <div className="flex flex-1 flex-col p-4">
-        {product.categories && (
-          <p className="text-xs font-medium uppercase tracking-wide text-foreground/55">
-            {product.categories.name}
-          </p>
+        {categoryList.length > 0 && (
+          <div className="flex flex-wrap gap-1.5">
+            {categoryList.slice(0, 2).map((cat) => (
+              <p
+                key={cat.id}
+                className="inline-flex w-fit rounded-full px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide"
+                style={
+                  cat.color_hex && /^#[0-9a-fA-F]{6}$/.test(cat.color_hex)
+                    ? { color: cat.color_hex, border: `1px solid ${cat.color_hex}55` }
+                    : undefined
+                }
+              >
+                {cat.name}
+              </p>
+            ))}
+          </div>
         )}
         <Link href={`/tienda/${product.slug}`}>
           <h2 className="mt-1 font-display text-lg font-bold text-brand">{product.name}</h2>

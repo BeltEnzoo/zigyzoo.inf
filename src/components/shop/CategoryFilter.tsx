@@ -7,6 +7,22 @@ type Props = {
 };
 
 export function CategoryFilter({ categories, activeSlug }: Props) {
+  function categoryStyle(hex: string | null | undefined, active: boolean) {
+    const color = hex?.trim();
+    if (!color || !/^#[0-9a-fA-F]{6}$/.test(color)) return undefined;
+    if (active) {
+      return {
+        backgroundColor: color,
+        borderColor: color,
+        color: "#111827",
+      };
+    }
+    return {
+      borderColor: color,
+      color,
+    };
+  }
+
   return (
     <div className="flex flex-wrap gap-2">
       <Link
@@ -23,6 +39,7 @@ export function CategoryFilter({ categories, activeSlug }: Props) {
         <Link
           key={c.id}
           href={`/tienda?categoria=${encodeURIComponent(c.slug)}`}
+          style={categoryStyle(c.color_hex, activeSlug === c.slug)}
           className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
             activeSlug === c.slug
               ? "bg-brand text-white"
