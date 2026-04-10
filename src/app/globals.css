@@ -1,0 +1,41 @@
+@import "tailwindcss";
+
+html {
+  scroll-behavior: smooth;
+}
+
+:root {
+  /* Manual de marca — fondos */
+  --color-azul-hielo: #e3f2fd;
+  --color-verde-menta: #d4e9e2;
+  --color-crema-arena: #f7e9d7;
+  /* Logo y acentos (lockup oficial) */
+  --color-azul-marca: #2d45ff;
+  --color-fondo-pagina: #fef8f8;
+  --color-terracota: #f18a6a;
+  --color-rosa-suave: #f6c1c5;
+  --color-verde-salvia: #9bb2af;
+  --color-marron: #4a2b25;
+  --color-texto: #1a1f4a;
+}
+
+@theme inline {
+  --color-background: var(--color-fondo-pagina);
+  --color-foreground: var(--color-texto);
+  --color-brand: var(--color-azul-marca);
+  --color-brand-muted: color-mix(in srgb, var(--color-azul-marca) 88%, white);
+  --color-surface-ice: var(--color-azul-hielo);
+  --color-surface-mint: var(--color-verde-menta);
+  --color-surface-sand: var(--color-crema-arena);
+  --color-accent-terracotta: var(--color-terracota);
+  --color-accent-pink: var(--color-rosa-suave);
+  --color-accent-sage: var(--color-verde-salvia);
+  --font-sans: var(--font-quicksand), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-big-shoulders), ui-sans-serif, system-ui, sans-serif;
+}
+
+body {
+  background: var(--color-fondo-pagina);
+  color: var(--color-texto);
+  font-family: var(--font-quicksand), ui-sans-serif, system-ui, sans-serif;
+}
