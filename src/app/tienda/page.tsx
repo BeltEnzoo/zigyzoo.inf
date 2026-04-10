@@ -9,15 +9,16 @@ import { getCategories, getProducts, isShopDatabaseConfigured } from "@/data/sho
 export const dynamic = "force-dynamic";
 
 type Props = {
-  searchParams: Promise<{ categoria?: string }>;
+  searchParams: Promise<{ categoria?: string; q?: string }>;
 };
 
 export default async function TiendaPage({ searchParams }: Props) {
-  const { categoria } = await searchParams;
+  const { categoria, q } = await searchParams;
   const configured = isShopDatabaseConfigured();
+  const query = (q ?? "").trim();
   const [categories, products] = await Promise.all([
     getCategories(),
-    getProducts({ categorySlug: categoria }),
+    getProducts({ categorySlug: categoria, q: query }),
   ]);
 
   return (
@@ -37,6 +38,32 @@ export default async function TiendaPage({ searchParams }: Props) {
         </div>
 
         <DemoBanner />
+        <form method="get" className="mt-6 mb-8">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <input
+              type="text"
+              name="q"
+              defaultValue={query}
+              placeholder="Buscar por nombre, descripción o slug"
+              className="w-full rounded-2xl border border-black/10 bg-white px-4 py-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+            />
+            {categoria && <input type="hidden" name="categoria" value={categoria} />}
+            <button
+              type="submit"
+              className="inline-flex min-h-11 items-center justify-center rounded-full bg-brand px-5 text-sm font-bold text-white hover:brightness-110"
+            >
+              Buscar
+            </button>
+            {query && (
+              <Link
+                href={categoria ? `/tienda?categoria=${encodeURIComponent(categoria)}` : "/tienda"}
+                className="text-sm font-semibold text-brand underline"
+              >
+                Limpiar búsqueda
+              </Link>
+            )}
+          </div>
+        </form>
 
         {categories.length > 0 && (
           <div className="mb-10">
@@ -47,7 +74,9 @@ export default async function TiendaPage({ searchParams }: Props) {
         {products.length === 0 ? (
           <div className="flex flex-1 flex-col items-center justify-center rounded-3xl border border-dashed border-brand/30 bg-surface-ice/50 px-6 py-16 text-center">
             <p className="text-lg font-medium text-foreground/80">
-              No hay productos en esta categoría.
+              {query
+                ? "No encontramos productos para esa búsqueda."
+                : "No hay productos en esta categoría."}
             </p>
             <p className="mt-2 max-w-md text-sm text-foreground/65">
               {configured

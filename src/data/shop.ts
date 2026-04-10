@@ -20,11 +20,12 @@ export async function getCategories(): Promise<Category[]> {
 type ListOpts = {
   categorySlug?: string;
   includeInactive?: boolean;
+  q?: string;
 };
 
 export async function getProducts(opts: ListOpts = {}): Promise<ProductListItem[]> {
   if (!isNeonConfigured()) {
-    return getMockProducts({ categorySlug: opts.categorySlug });
+    return getMockProducts({ categorySlug: opts.categorySlug, q: opts.q });
   }
   try {
     return await dbGetProducts(opts);

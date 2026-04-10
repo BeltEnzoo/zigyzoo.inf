@@ -86,6 +86,7 @@ export async function dbGetCategories(): Promise<Category[]> {
 export async function dbGetProducts(opts: {
   categorySlug?: string;
   includeInactive?: boolean;
+  q?: string;
 }): Promise<ProductListItem[]> {
   const sql = getSql()!;
 
@@ -101,6 +102,9 @@ export async function dbGetProducts(opts: {
 
   const includeInactive = Boolean(opts.includeInactive);
   const hasCat = categoryId !== null;
+  const q = opts.q?.trim() ?? "";
+  const hasQ = q.length > 0;
+  const qLike = `%${q}%`;
 
   const rows = await sql`
     select
@@ -179,6 +183,12 @@ export async function dbGetProducts(opts: {
           select 1 from product_categories pc
           where pc.product_id = p.id and pc.category_id = ${categoryId}::uuid
         )
+      )
+      and (
+        not ${hasQ}
+        or p.name ilike ${qLike}
+        or coalesce(p.description, '') ilike ${qLike}
+        or p.slug ilike ${qLike}
       )
     order by p.name asc
   `;

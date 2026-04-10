@@ -293,11 +293,19 @@ export function getMockCategories(): Category[] {
   return mockCategories;
 }
 
-export function getMockProducts(opts: { categorySlug?: string } = {}): ProductListItem[] {
-  if (!opts.categorySlug) return mockList;
-  const exists = mockCategories.some((c) => c.slug === opts.categorySlug);
-  if (!exists) return [];
-  return mockList.filter((p) => p.categories?.slug === opts.categorySlug);
+export function getMockProducts(opts: { categorySlug?: string; q?: string } = {}): ProductListItem[] {
+  let out = mockList;
+  if (opts.categorySlug) {
+    const exists = mockCategories.some((c) => c.slug === opts.categorySlug);
+    if (!exists) return [];
+    out = out.filter((p) => p.categories?.slug === opts.categorySlug);
+  }
+  const q = opts.q?.trim().toLowerCase();
+  if (!q) return out;
+  return out.filter((p) => {
+    const haystack = `${p.name} ${p.slug} ${p.description ?? ""}`.toLowerCase();
+    return haystack.includes(q);
+  });
 }
 
 export function getMockProductBySlug(slug: string): ProductDetail | null {
