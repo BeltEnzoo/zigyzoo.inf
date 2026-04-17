@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ProductCardAdd } from "@/components/shop/ProductCardAdd";
 import { formatMoney } from "@/lib/format";
+import { productImageFrameClass, productImageImgClass } from "@/lib/shop/product-image-spec";
 import type { ProductListItem } from "@/types/shop";
 
 function totalStock(p: ProductListItem) {
@@ -37,14 +38,14 @@ export function ProductCard({ product }: { product: ProductListItem }) {
     <article className="group flex flex-col overflow-hidden rounded-3xl border border-black/5 bg-white shadow-sm transition hover:shadow-md">
       <Link
         href={`/tienda/${product.slug}`}
-        className="relative h-32 overflow-hidden bg-surface-ice/50 sm:h-36"
+        className={`block rounded-t-3xl ${productImageFrameClass}`}
       >
         {img ? (
           // eslint-disable-next-line @next/next/no-img-element -- URLs externas arbitrarias
           <img
             src={img}
             alt=""
-            className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.02]"
+            className={`${productImageImgClass} transition duration-300 group-hover:scale-[1.02]`}
             loading="lazy"
           />
         ) : (

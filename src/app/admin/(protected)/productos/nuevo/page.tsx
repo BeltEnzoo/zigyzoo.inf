@@ -23,7 +23,8 @@ export default async function NuevoProductoPage() {
           Con <code className="rounded bg-surface-ice px-1">SHOP_CATALOG_SOURCE=sheet</code> el
           catálogo se carga solo desde la Google Sheet. Agregá o editá filas en la hoja y usá{" "}
           <strong className="text-brand">Actualizar catálogo (hoja)</strong> en la lista de
-          productos.
+          productos. En <code className="rounded bg-surface-ice px-1">image_urls</code>, usá fotos{" "}
+          <strong>768×1251 px</strong> para la misma proporción que la tienda.
         </p>
       </div>
     );
@@ -42,7 +43,8 @@ export default async function NuevoProductoPage() {
       </h1>
       <p className="mt-2 max-w-xl text-sm text-foreground/75">
         Precio único por producto; stock por cada talle. Imágenes solo con URL
-        (sin subir archivos al servidor).
+        (sin subir archivos al servidor). Fotos de producto: <strong>768×1251 px</strong> para
+        coincidir con la grilla de la tienda.
       </p>
       <div className="mt-8">
         <ProductCreateForm categories={categories} />

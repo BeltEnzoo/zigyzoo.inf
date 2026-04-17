@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { createProduct } from "@/app/actions/products";
+import { PRODUCT_IMAGE_SPEC_LABEL } from "@/lib/shop/product-image-spec";
 import type { Category } from "@/types/shop";
 
 export function ProductCreateForm({ categories }: { categories: Category[] }) {
@@ -100,7 +101,10 @@ export function ProductCreateForm({ categories }: { categories: Category[] }) {
           placeholder={"https://ejemplo.com/foto1.jpg\nhttps://ejemplo.com/foto2.jpg"}
           className="w-full rounded-2xl border border-black/10 bg-white px-4 py-3 font-mono text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/25"
         />
-        <p className="mt-1 text-xs text-foreground/60">Una URL por línea.</p>
+        <p className="mt-1 text-xs text-foreground/60">
+          Una URL por línea. Imágenes recomendadas: <strong>{PRODUCT_IMAGE_SPEC_LABEL}</strong>{" "}
+          (proporción vertical de ficha).
+        </p>
       </div>
       <div>
         <label htmlFor="variants" className="mb-1 block text-sm font-semibold">

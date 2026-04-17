@@ -7,6 +7,7 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { getProductBySlug } from "@/data/shop";
 import { formatMoney } from "@/lib/format";
 import { getWhatsAppUrl } from "@/config/site";
+import { productImageFrameClass, productImageImgClass } from "@/lib/shop/product-image-spec";
 
 export const dynamic = "force-dynamic";
 
@@ -55,13 +56,15 @@ export default async function ProductoPage({ params }: Props) {
                   key={im.id}
                   className="overflow-hidden rounded-3xl border border-black/5 bg-white"
                 >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={im.url}
-                    alt=""
-                    className="max-h-64 w-full object-cover object-center sm:max-h-72"
-                    loading="lazy"
-                  />
+                  <div className={productImageFrameClass}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={im.url}
+                      alt=""
+                      className={productImageImgClass}
+                      loading="lazy"
+                    />
+                  </div>
                 </div>
               ))
             )}
