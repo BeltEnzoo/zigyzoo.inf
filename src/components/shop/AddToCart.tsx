@@ -1,9 +1,16 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { formatVariantOptionLabel } from "@/lib/shop/variant-label";
 import { useCartStore } from "@/store/cart";
 
-type Variant = { id: string; size_label: string; stock: number };
+type Variant = {
+  id: string;
+  size_label: string;
+  stock: number;
+  color_producto?: string | null;
+  tamano_producto?: string | null;
+};
 
 type Props = {
   product: {
@@ -28,6 +35,16 @@ export function AddToCart({ product }: Props) {
     [product.variants],
   );
 
+  const showVariantHint = useMemo(
+    () =>
+      product.variants.some(
+        (v) =>
+          (v.color_producto?.trim() ?? "") !== "" ||
+          (v.tamano_producto?.trim() ?? "") !== "",
+      ),
+    [product.variants],
+  );
+
   useEffect(() => {
     if (!variantId && variantsInStock.length > 0) {
       setVariantId(variantsInStock[0].id);
@@ -44,7 +61,7 @@ export function AddToCart({ product }: Props) {
   function handleAdd() {
     setFeedback(null);
     if (!selected || maxQty <= 0) {
-      setFeedback("Elegí un talle con stock.");
+      setFeedback("Elegí una variante con stock.");
       return;
     }
     const q = Math.min(Math.max(1, qty), maxQty);
@@ -56,7 +73,7 @@ export function AddToCart({ product }: Props) {
       price: product.price,
       currency: product.currency,
       variantId: selected.id,
-      sizeLabel: selected.size_label,
+      sizeLabel: formatVariantOptionLabel(selected),
       quantity: q,
       maxStock: selected.stock,
     });
@@ -65,7 +82,7 @@ export function AddToCart({ product }: Props) {
 
   if (variantsInStock.length === 0) {
     return (
-      <p className="text-sm text-foreground/65">No hay talles disponibles por ahora.</p>
+      <p className="text-sm text-foreground/65">No hay variantes con stock por ahora.</p>
     );
   }
 
@@ -74,10 +91,17 @@ export function AddToCart({ product }: Props) {
       <h2 className="font-display text-lg font-bold text-brand">Comprar</h2>
       <div>
         <label htmlFor="variant" className="mb-1 block text-sm font-semibold">
-          Talle
+          Variante
         </label>
+        {showVariantHint && (
+          <p id="variant-hint" className="mb-2 text-xs leading-relaxed text-foreground/60">
+            Orden en cada opción: color · tamaño · talle (solo aparecen los datos que
+            tenga el producto).
+          </p>
+        )}
         <select
           id="variant"
+          aria-describedby={showVariantHint ? "variant-hint" : undefined}
           className="w-full max-w-xs rounded-2xl border border-black/10 bg-white px-4 py-3 outline-none focus:border-brand focus:ring-2 focus:ring-brand/25"
           value={variantId}
           onChange={(e) => {
@@ -85,10 +109,10 @@ export function AddToCart({ product }: Props) {
             setQty(1);
           }}
         >
-          <option value="">Elegí un talle</option>
+          <option value="">Elegí una variante</option>
           {variantsInStock.map((v) => (
             <option key={v.id} value={v.id}>
-              Talle {v.size_label} ({v.stock} disponibles)
+              {formatVariantOptionLabel(v)} ({v.stock} disponibles)
             </option>
           ))}
         </select>

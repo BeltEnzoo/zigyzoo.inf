@@ -1,6 +1,8 @@
 import Link from "next/link";
+import { getCatalogSource } from "@/lib/catalog/catalog-source";
 
-export default function AdminHomePage() {
+export default async function AdminHomePage() {
+  const catalog = getCatalogSource();
   return (
     <div>
       <h1 className="font-display text-2xl font-bold text-brand">Bienvenido al panel</h1>
@@ -14,11 +16,13 @@ export default function AdminHomePage() {
             Ver productos
           </Link>
         </li>
-        <li>
-          <Link href="/admin/productos/nuevo" className="font-semibold underline">
-            Cargar nuevo producto
-          </Link>
-        </li>
+        {catalog === "neon" && (
+          <li>
+            <Link href="/admin/productos/nuevo" className="font-semibold underline">
+              Cargar nuevo producto
+            </Link>
+          </li>
+        )}
         <li>
           <Link href="/tienda" className="font-semibold text-foreground/70 underline">
             Ver tienda pública

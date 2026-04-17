@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { getCatalogSource } from "@/lib/catalog/catalog-source";
 import { getAdminSession } from "@/lib/auth/session";
 import { getSql } from "@/lib/db/neon";
 
@@ -19,6 +20,14 @@ export type CreateProductResult = { ok: true } | { ok: false; error: string };
 export async function createProduct(formData: FormData): Promise<CreateProductResult> {
   const session = await getAdminSession();
   if (!session) return { ok: false, error: "No autorizado." };
+
+  if (getCatalogSource() === "sheet") {
+    return {
+      ok: false,
+      error:
+        "El catálogo se gestiona solo con la Google Sheet. Editá la hoja y usá «Actualizar catálogo» en Productos.",
+    };
+  }
 
   const sql = getSql();
   if (!sql) return { ok: false, error: "Base de datos no configurada." };
@@ -80,8 +89,8 @@ export async function createProduct(formData: FormData): Promise<CreateProductRe
   let productId: string;
   try {
     const rows = await sql`
-      insert into products (name, slug, description, price, category_id, is_active)
-      values (${name}, ${slug}, ${desc}, ${price}, ${categoryId}, true)
+      insert into products (name, slug, description, price, category_id, is_active, sheet_managed)
+      values (${name}, ${slug}, ${desc}, ${price}, ${categoryId}, true, false)
       returning id
     `;
     const row = rows[0] as { id: string } | undefined;
@@ -98,8 +107,8 @@ export async function createProduct(formData: FormData): Promise<CreateProductRe
   try {
     for (const v of variants) {
       await sql`
-        insert into product_variants (product_id, size_label, stock, sort_order)
-        values (${productId}::uuid, ${v.size_label}, ${v.stock}, ${v.sort_order})
+        insert into product_variants (product_id, size_label, stock, sort_order, color_producto, tamano_producto)
+        values (${productId}::uuid, ${v.size_label}, ${v.stock}, ${v.sort_order}, null, null)
       `;
     }
     if (imageUrls.length > 0) {

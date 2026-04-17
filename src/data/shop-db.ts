@@ -18,6 +18,8 @@ type ProductRow = {
     stock: number;
     size_label: string;
     sort_order?: number;
+    color_producto?: string | null;
+    tamano_producto?: string | null;
   }[];
 };
 
@@ -38,7 +40,15 @@ function normalizeListRow(r: ProductRow): ProductListItem {
     categories: r.categories,
     categories_all: Array.isArray(r.categories_all) ? r.categories_all : [],
     product_images: Array.isArray(r.product_images) ? r.product_images : [],
-    product_variants: Array.isArray(r.product_variants) ? r.product_variants : [],
+    product_variants: Array.isArray(r.product_variants)
+      ? r.product_variants.map((v) => ({
+          id: v.id,
+          stock: v.stock,
+          size_label: v.size_label,
+          color_producto: v.color_producto ?? null,
+          tamano_producto: v.tamano_producto ?? null,
+        }))
+      : [],
   };
 }
 
@@ -69,6 +79,8 @@ function normalizeDetailRow(r: ProductRow): ProductDetail {
       sku: null,
       stock: v.stock,
       sort_order: typeof v.sort_order === "number" ? v.sort_order : 0,
+      color_producto: v.color_producto ?? null,
+      tamano_producto: v.tamano_producto ?? null,
     })),
   };
 }
@@ -87,6 +99,8 @@ export async function dbGetProducts(opts: {
   categorySlug?: string;
   includeInactive?: boolean;
   q?: string;
+  colorProducto?: string;
+  tamanoProducto?: string;
 }): Promise<ProductListItem[]> {
   const sql = getSql()!;
 
@@ -105,6 +119,11 @@ export async function dbGetProducts(opts: {
   const q = opts.q?.trim() ?? "";
   const hasQ = q.length > 0;
   const qLike = `%${q}%`;
+
+  const colorProducto = opts.colorProducto?.trim() ?? "";
+  const hasColor = colorProducto.length > 0;
+  const tamanoProducto = opts.tamanoProducto?.trim() ?? "";
+  const hasTamano = tamanoProducto.length > 0;
 
   const rows = await sql`
     select
@@ -165,7 +184,9 @@ export async function dbGetProducts(opts: {
             json_build_object(
               'id', v.id::text,
               'stock', v.stock,
-              'size_label', v.size_label
+              'size_label', v.size_label,
+              'color_producto', v.color_producto,
+              'tamano_producto', v.tamano_producto
             )
             order by v.sort_order, v.size_label
           )
@@ -189,6 +210,22 @@ export async function dbGetProducts(opts: {
         or p.name ilike ${qLike}
         or coalesce(p.description, '') ilike ${qLike}
         or p.slug ilike ${qLike}
+      )
+      and (
+        not ${hasColor}
+        or exists (
+          select 1 from product_variants vc
+          where vc.product_id = p.id
+            and trim(coalesce(vc.color_producto, '')) = ${colorProducto}
+        )
+      )
+      and (
+        not ${hasTamano}
+        or exists (
+          select 1 from product_variants vt
+          where vt.product_id = p.id
+            and trim(coalesce(vt.tamano_producto, '')) = ${tamanoProducto}
+        )
       )
     order by p.name asc
   `;
@@ -261,7 +298,9 @@ export async function dbGetProductBySlug(
               'id', v.id::text,
               'stock', v.stock,
               'size_label', v.size_label,
-              'sort_order', v.sort_order
+              'sort_order', v.sort_order,
+              'color_producto', v.color_producto,
+              'tamano_producto', v.tamano_producto
             )
             order by v.sort_order, v.size_label
           )

@@ -62,9 +62,9 @@ const mockList: ProductListItem[] = [
       { id: "mock-i-2", url: IMG.remera2, sort_order: 1 },
     ],
     product_variants: [
-      { id: "mock-v-1", stock: 4, size_label: "4" },
-      { id: "mock-v-2", stock: 6, size_label: "6" },
-      { id: "mock-v-3", stock: 2, size_label: "8" },
+      { id: "mock-v-1", stock: 4, color_producto: null, tamano_producto: null, size_label: "4" },
+      { id: "mock-v-2", stock: 6, color_producto: null, tamano_producto: null, size_label: "6" },
+      { id: "mock-v-3", stock: 2, color_producto: null, tamano_producto: null, size_label: "8" },
     ],
   },
   {
@@ -79,8 +79,8 @@ const mockList: ProductListItem[] = [
     categories: mockCategories[1],
     product_images: [{ id: "mock-i-3", url: IMG.pantalon, sort_order: 0 }],
     product_variants: [
-      { id: "mock-v-4", stock: 3, size_label: "6" },
-      { id: "mock-v-5", stock: 0, size_label: "8" },
+      { id: "mock-v-4", stock: 3, color_producto: null, tamano_producto: null, size_label: "6" },
+      { id: "mock-v-5", stock: 0, color_producto: null, tamano_producto: null, size_label: "8" },
     ],
   },
   {
@@ -95,8 +95,8 @@ const mockList: ProductListItem[] = [
     categories: mockCategories[2],
     product_images: [{ id: "mock-i-4", url: IMG.vestido, sort_order: 0 }],
     product_variants: [
-      { id: "mock-v-6", stock: 5, size_label: "4" },
-      { id: "mock-v-7", stock: 1, size_label: "6" },
+      { id: "mock-v-6", stock: 5, color_producto: null, tamano_producto: null, size_label: "4" },
+      { id: "mock-v-7", stock: 1, color_producto: null, tamano_producto: null, size_label: "6" },
     ],
   },
   {
@@ -111,9 +111,9 @@ const mockList: ProductListItem[] = [
     categories: mockCategories[0],
     product_images: [{ id: "mock-i-5", url: IMG.remera3, sort_order: 0 }],
     product_variants: [
-      { id: "mock-v-8", stock: 8, size_label: "4" },
-      { id: "mock-v-9", stock: 4, size_label: "6" },
-      { id: "mock-v-10", stock: 2, size_label: "8" },
+      { id: "mock-v-8", stock: 8, color_producto: null, tamano_producto: null, size_label: "4" },
+      { id: "mock-v-9", stock: 4, color_producto: null, tamano_producto: null, size_label: "6" },
+      { id: "mock-v-10", stock: 2, color_producto: null, tamano_producto: null, size_label: "8" },
     ],
   },
   {
@@ -128,9 +128,9 @@ const mockList: ProductListItem[] = [
     categories: mockCategories[3],
     product_images: [{ id: "mock-i-6", url: IMG.buzo, sort_order: 0 }],
     product_variants: [
-      { id: "mock-v-11", stock: 3, size_label: "4" },
-      { id: "mock-v-12", stock: 5, size_label: "6" },
-      { id: "mock-v-13", stock: 1, size_label: "8" },
+      { id: "mock-v-11", stock: 3, color_producto: null, tamano_producto: null, size_label: "4" },
+      { id: "mock-v-12", stock: 5, color_producto: null, tamano_producto: null, size_label: "6" },
+      { id: "mock-v-13", stock: 1, color_producto: null, tamano_producto: null, size_label: "8" },
     ],
   },
   {
@@ -145,8 +145,8 @@ const mockList: ProductListItem[] = [
     categories: mockCategories[1],
     product_images: [{ id: "mock-i-7", url: IMG.short, sort_order: 0 }],
     product_variants: [
-      { id: "mock-v-14", stock: 6, size_label: "6" },
-      { id: "mock-v-15", stock: 6, size_label: "8" },
+      { id: "mock-v-14", stock: 6, color_producto: null, tamano_producto: null, size_label: "6" },
+      { id: "mock-v-15", stock: 6, color_producto: null, tamano_producto: null, size_label: "8" },
     ],
   },
   {
@@ -161,8 +161,8 @@ const mockList: ProductListItem[] = [
     categories: mockCategories[2],
     product_images: [{ id: "mock-i-8", url: IMG.pollera, sort_order: 0 }],
     product_variants: [
-      { id: "mock-v-16", stock: 4, size_label: "4" },
-      { id: "mock-v-17", stock: 2, size_label: "6" },
+      { id: "mock-v-16", stock: 4, color_producto: null, tamano_producto: null, size_label: "4" },
+      { id: "mock-v-17", stock: 2, color_producto: null, tamano_producto: null, size_label: "6" },
     ],
   },
   {
@@ -177,8 +177,8 @@ const mockList: ProductListItem[] = [
     categories: mockCategories[0],
     product_images: [{ id: "mock-i-9", url: IMG.body, sort_order: 0 }],
     product_variants: [
-      { id: "mock-v-18", stock: 10, size_label: "0-3 m" },
-      { id: "mock-v-19", stock: 7, size_label: "3-6 m" },
+      { id: "mock-v-18", stock: 10, color_producto: null, tamano_producto: null, size_label: "0-3 m" },
+      { id: "mock-v-19", stock: 7, color_producto: null, tamano_producto: null, size_label: "3-6 m" },
     ],
   },
   {
@@ -193,8 +193,8 @@ const mockList: ProductListItem[] = [
     categories: mockCategories[4],
     product_images: [{ id: "mock-i-10", url: IMG.medias, sort_order: 0 }],
     product_variants: [
-      { id: "mock-v-20", stock: 20, size_label: "21-23" },
-      { id: "mock-v-21", stock: 15, size_label: "24-26" },
+      { id: "mock-v-20", stock: 20, color_producto: null, tamano_producto: null, size_label: "21-23" },
+      { id: "mock-v-21", stock: 15, color_producto: null, tamano_producto: null, size_label: "24-26" },
     ],
   },
   {
@@ -209,16 +209,23 @@ const mockList: ProductListItem[] = [
     categories: mockCategories[3],
     product_images: [{ id: "mock-i-11", url: IMG.campera, sort_order: 0 }],
     product_variants: [
-      { id: "mock-v-22", stock: 2, size_label: "4" },
-      { id: "mock-v-23", stock: 3, size_label: "6" },
-      { id: "mock-v-24", stock: 0, size_label: "8" },
+      { id: "mock-v-22", stock: 2, color_producto: null, tamano_producto: null, size_label: "4" },
+      { id: "mock-v-23", stock: 3, color_producto: null, tamano_producto: null, size_label: "6" },
+      { id: "mock-v-24", stock: 0, color_producto: null, tamano_producto: null, size_label: "8" },
     ],
   },
 ];
 
 function detail(
   p: ProductListItem,
-  variants: { id: string; size_label: string; stock: number; sort_order: number }[],
+  variants: {
+    id: string;
+    size_label: string;
+    stock: number;
+    sort_order: number;
+    color_producto?: string | null;
+    tamano_producto?: string | null;
+  }[],
 ): ProductDetail {
   return {
     id: p.id,
@@ -238,54 +245,56 @@ function detail(
       ...v,
       product_id: p.id,
       sku: null,
+      color_producto: v.color_producto ?? null,
+      tamano_producto: v.tamano_producto ?? null,
     })),
   };
 }
 
 const mockDetails: Record<string, ProductDetail> = {
   "remera-manga-corta-algodon": detail(mockList[0], [
-    { id: "mock-v-1", size_label: "4", stock: 4, sort_order: 0 },
-    { id: "mock-v-2", size_label: "6", stock: 6, sort_order: 1 },
-    { id: "mock-v-3", size_label: "8", stock: 2, sort_order: 2 },
+    { id: "mock-v-1", color_producto: null, tamano_producto: null, size_label: "4", stock: 4, sort_order: 0 },
+    { id: "mock-v-2", color_producto: null, tamano_producto: null, size_label: "6", stock: 6, sort_order: 1 },
+    { id: "mock-v-3", color_producto: null, tamano_producto: null, size_label: "8", stock: 2, sort_order: 2 },
   ]),
   "pantalon-jogger": detail(mockList[1], [
-    { id: "mock-v-4", size_label: "6", stock: 3, sort_order: 0 },
-    { id: "mock-v-5", size_label: "8", stock: 0, sort_order: 1 },
+    { id: "mock-v-4", color_producto: null, tamano_producto: null, size_label: "6", stock: 3, sort_order: 0 },
+    { id: "mock-v-5", color_producto: null, tamano_producto: null, size_label: "8", stock: 0, sort_order: 1 },
   ]),
   "vestido-estampado": detail(mockList[2], [
-    { id: "mock-v-6", size_label: "4", stock: 5, sort_order: 0 },
-    { id: "mock-v-7", size_label: "6", stock: 1, sort_order: 1 },
+    { id: "mock-v-6", color_producto: null, tamano_producto: null, size_label: "4", stock: 5, sort_order: 0 },
+    { id: "mock-v-7", color_producto: null, tamano_producto: null, size_label: "6", stock: 1, sort_order: 1 },
   ]),
   "remera-rayada-clasica": detail(mockList[3], [
-    { id: "mock-v-8", size_label: "4", stock: 8, sort_order: 0 },
-    { id: "mock-v-9", size_label: "6", stock: 4, sort_order: 1 },
-    { id: "mock-v-10", size_label: "8", stock: 2, sort_order: 2 },
+    { id: "mock-v-8", color_producto: null, tamano_producto: null, size_label: "4", stock: 8, sort_order: 0 },
+    { id: "mock-v-9", color_producto: null, tamano_producto: null, size_label: "6", stock: 4, sort_order: 1 },
+    { id: "mock-v-10", color_producto: null, tamano_producto: null, size_label: "8", stock: 2, sort_order: 2 },
   ]),
   "buzo-capucha": detail(mockList[4], [
-    { id: "mock-v-11", size_label: "4", stock: 3, sort_order: 0 },
-    { id: "mock-v-12", size_label: "6", stock: 5, sort_order: 1 },
-    { id: "mock-v-13", size_label: "8", stock: 1, sort_order: 2 },
+    { id: "mock-v-11", color_producto: null, tamano_producto: null, size_label: "4", stock: 3, sort_order: 0 },
+    { id: "mock-v-12", color_producto: null, tamano_producto: null, size_label: "6", stock: 5, sort_order: 1 },
+    { id: "mock-v-13", color_producto: null, tamano_producto: null, size_label: "8", stock: 1, sort_order: 2 },
   ]),
   "short-deportivo": detail(mockList[5], [
-    { id: "mock-v-14", size_label: "6", stock: 6, sort_order: 0 },
-    { id: "mock-v-15", size_label: "8", stock: 6, sort_order: 1 },
+    { id: "mock-v-14", color_producto: null, tamano_producto: null, size_label: "6", stock: 6, sort_order: 0 },
+    { id: "mock-v-15", color_producto: null, tamano_producto: null, size_label: "8", stock: 6, sort_order: 1 },
   ]),
   "pollera-plisada": detail(mockList[6], [
-    { id: "mock-v-16", size_label: "4", stock: 4, sort_order: 0 },
-    { id: "mock-v-17", size_label: "6", stock: 2, sort_order: 1 },
+    { id: "mock-v-16", color_producto: null, tamano_producto: null, size_label: "4", stock: 4, sort_order: 0 },
+    { id: "mock-v-17", color_producto: null, tamano_producto: null, size_label: "6", stock: 2, sort_order: 1 },
   ]),
   "body-manga-larga": detail(mockList[7], [
-    { id: "mock-v-18", size_label: "0-3 m", stock: 10, sort_order: 0 },
-    { id: "mock-v-19", size_label: "3-6 m", stock: 7, sort_order: 1 },
+    { id: "mock-v-18", color_producto: null, tamano_producto: null, size_label: "0-3 m", stock: 10, sort_order: 0 },
+    { id: "mock-v-19", color_producto: null, tamano_producto: null, size_label: "3-6 m", stock: 7, sort_order: 1 },
   ]),
   "pack-medias": detail(mockList[8], [
-    { id: "mock-v-20", size_label: "21-23", stock: 20, sort_order: 0 },
-    { id: "mock-v-21", size_label: "24-26", stock: 15, sort_order: 1 },
+    { id: "mock-v-20", color_producto: null, tamano_producto: null, size_label: "21-23", stock: 20, sort_order: 0 },
+    { id: "mock-v-21", color_producto: null, tamano_producto: null, size_label: "24-26", stock: 15, sort_order: 1 },
   ]),
   "campera-rompeviento": detail(mockList[9], [
-    { id: "mock-v-22", size_label: "4", stock: 2, sort_order: 0 },
-    { id: "mock-v-23", size_label: "6", stock: 3, sort_order: 1 },
-    { id: "mock-v-24", size_label: "8", stock: 0, sort_order: 2 },
+    { id: "mock-v-22", color_producto: null, tamano_producto: null, size_label: "4", stock: 2, sort_order: 0 },
+    { id: "mock-v-23", color_producto: null, tamano_producto: null, size_label: "6", stock: 3, sort_order: 1 },
+    { id: "mock-v-24", color_producto: null, tamano_producto: null, size_label: "8", stock: 0, sort_order: 2 },
   ]),
 };
 
@@ -293,7 +302,9 @@ export function getMockCategories(): Category[] {
   return mockCategories;
 }
 
-export function getMockProducts(opts: { categorySlug?: string; q?: string } = {}): ProductListItem[] {
+export function getMockProducts(
+  opts: { categorySlug?: string; q?: string; colorProducto?: string; tamanoProducto?: string } = {},
+): ProductListItem[] {
   let out = mockList;
   if (opts.categorySlug) {
     const exists = mockCategories.some((c) => c.slug === opts.categorySlug);
@@ -301,11 +312,25 @@ export function getMockProducts(opts: { categorySlug?: string; q?: string } = {}
     out = out.filter((p) => p.categories?.slug === opts.categorySlug);
   }
   const q = opts.q?.trim().toLowerCase();
-  if (!q) return out;
-  return out.filter((p) => {
-    const haystack = `${p.name} ${p.slug} ${p.description ?? ""}`.toLowerCase();
-    return haystack.includes(q);
-  });
+  if (q) {
+    out = out.filter((p) => {
+      const haystack = `${p.name} ${p.slug} ${p.description ?? ""}`.toLowerCase();
+      return haystack.includes(q);
+    });
+  }
+  const color = opts.colorProducto?.trim();
+  if (color) {
+    out = out.filter((p) =>
+      p.product_variants.some((v) => (v.color_producto?.trim() ?? "") === color),
+    );
+  }
+  const tam = opts.tamanoProducto?.trim();
+  if (tam) {
+    out = out.filter((p) =>
+      p.product_variants.some((v) => (v.tamano_producto?.trim() ?? "") === tam),
+    );
+  }
+  return out;
 }
 
 export function getMockProductBySlug(slug: string): ProductDetail | null {

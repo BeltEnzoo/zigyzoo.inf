@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { formatVariantOptionLabel } from "@/lib/shop/variant-label";
 import { useCartStore } from "@/store/cart";
 import type { ProductListItem } from "@/types/shop";
 
@@ -13,6 +14,16 @@ export function ProductCardAdd({ product, imageUrl }: Props) {
   const addOrUpdateLine = useCartStore((s) => s.addOrUpdateLine);
   const variantsInStock = useMemo(
     () => product.product_variants.filter((v) => v.stock > 0),
+    [product.product_variants],
+  );
+
+  const showVariantHint = useMemo(
+    () =>
+      product.product_variants.some(
+        (v) =>
+          (v.color_producto?.trim() ?? "") !== "" ||
+          (v.tamano_producto?.trim() ?? "") !== "",
+      ),
     [product.product_variants],
   );
   const [variantId, setVariantId] = useState("");
@@ -39,7 +50,7 @@ export function ProductCardAdd({ product, imageUrl }: Props) {
       price: product.price,
       currency: product.currency,
       variantId: selected.id,
-      sizeLabel: selected.size_label || "?",
+      sizeLabel: formatVariantOptionLabel(selected),
       quantity: 1,
       maxStock: selected.stock,
     });
@@ -58,17 +69,29 @@ export function ProductCardAdd({ product, imageUrl }: Props) {
   return (
     <div className="mt-3 space-y-2" onClick={(e) => e.stopPropagation()}>
       <label className="sr-only" htmlFor={`talle-${product.id}`}>
-        Talle para {product.name}
+        {showVariantHint
+          ? `Variante (orden: color, tamaño, talle) para ${product.name}`
+          : `Talle para ${product.name}`}
       </label>
+      {showVariantHint && (
+        <p className="mb-1 text-[0.65rem] leading-snug text-foreground/55" aria-hidden="true">
+          Color · tamaño · talle
+        </p>
+      )}
       <select
         id={`talle-${product.id}`}
         value={variantId}
         onChange={(e) => setVariantId(e.target.value)}
+        title={
+          showVariantHint
+            ? "Orden en cada opción: color, tamaño, talle (si están cargados)"
+            : undefined
+        }
         className="w-full rounded-xl border border-black/10 bg-white px-3 py-2 text-sm font-medium text-foreground outline-none focus:border-brand focus:ring-1 focus:ring-brand/30"
       >
         {variantsInStock.map((v) => (
           <option key={v.id} value={v.id}>
-            Talle {v.size_label}
+            {formatVariantOptionLabel(v)}
           </option>
         ))}
       </select>

@@ -14,6 +14,12 @@ function firstImage(p: ProductListItem) {
   return imgs[0]?.url ?? null;
 }
 
+/** Texto normalizado para el extracto bajo la foto. */
+function cleanDescription(raw: string | null | undefined) {
+  if (!raw?.trim()) return null;
+  return raw.replace(/\s+/g, " ").trim();
+}
+
 export function ProductCard({ product }: { product: ProductListItem }) {
   const img = firstImage(product);
   const stock = totalStock(product);
@@ -24,6 +30,8 @@ export function ProductCard({ product }: { product: ProductListItem }) {
       : product.categories
         ? [product.categories]
         : [];
+
+  const descriptionPreview = cleanDescription(product.description);
 
   return (
     <article className="group flex flex-col overflow-hidden rounded-3xl border border-black/5 bg-white shadow-sm transition hover:shadow-md">
@@ -50,6 +58,11 @@ export function ProductCard({ product }: { product: ProductListItem }) {
           </span>
         )}
       </Link>
+      {descriptionPreview && (
+        <p className="line-clamp-3 border-b border-black/[0.06] bg-surface-ice/30 px-4 py-2.5 text-sm leading-snug text-foreground/75">
+          {descriptionPreview}
+        </p>
+      )}
       <div className="flex flex-1 flex-col p-4">
         {categoryList.length > 0 && (
           <div className="flex flex-wrap gap-1.5">

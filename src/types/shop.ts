@@ -24,6 +24,8 @@ export type ProductVariant = {
   sku: string | null;
   stock: number;
   sort_order: number;
+  color_producto: string | null;
+  tamano_producto: string | null;
 };
 
 export type ProductImage = {
@@ -37,7 +39,10 @@ export type ProductListItem = Product & {
   categories: Category | null;
   categories_all?: Category[];
   product_images: Pick<ProductImage, "id" | "url" | "sort_order">[];
-  product_variants: Pick<ProductVariant, "id" | "stock" | "size_label">[];
+  product_variants: Pick<
+    ProductVariant,
+    "id" | "stock" | "size_label" | "color_producto" | "tamano_producto"
+  >[];
 };
 
 export type ProductDetail = Product & {

@@ -1,24 +1,16 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import { syncProductsFromGoogleSheet } from "@/app/actions/sync-products-sheet";
+import { CatalogSyncToast } from "@/components/admin/CatalogSyncToast";
 import { getProducts } from "@/data/shop";
+import { getCatalogSource } from "@/lib/catalog/catalog-source";
 import { formatMoney } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
-type Props = {
-  searchParams: Promise<{
-    sync?: string;
-    created?: string;
-    updated?: string;
-    skipped?: string;
-    errors?: string;
-    detail?: string;
-  }>;
-};
-
-export default async function AdminProductosPage({ searchParams }: Props) {
-  const params = await searchParams;
+export default async function AdminProductosPage() {
   const products = await getProducts({ includeInactive: true });
+  const catalog = getCatalogSource();
 
   return (
     <div>
@@ -30,29 +22,23 @@ export default async function AdminProductosPage({ searchParams }: Props) {
               type="submit"
               className="inline-flex items-center justify-center rounded-full border border-brand/30 bg-white px-5 py-2.5 text-sm font-bold text-brand hover:bg-surface-ice"
             >
-              Sincronizar Google Sheet
+              {catalog === "sheet" ? "Actualizar catálogo (hoja)" : "Sincronizar Google Sheet → Neon"}
             </button>
           </form>
-          <Link
-            href="/admin/productos/nuevo"
-            className="inline-flex items-center justify-center rounded-full bg-brand px-5 py-2.5 text-sm font-bold text-white hover:brightness-110"
-          >
-            Nuevo producto
-          </Link>
+          {catalog === "neon" && (
+            <Link
+              href="/admin/productos/nuevo"
+              className="inline-flex items-center justify-center rounded-full bg-brand px-5 py-2.5 text-sm font-bold text-white hover:brightness-110"
+            >
+              Nuevo producto
+            </Link>
+          )}
         </div>
       </div>
 
-      {params.sync === "ok" && (
-        <p className="mt-4 rounded-xl border border-brand/20 bg-surface-mint/50 px-4 py-3 text-sm text-foreground/85">
-          Sync OK: {params.created ?? "0"} creados, {params.updated ?? "0"} actualizados,{" "}
-          {params.skipped ?? "0"} omitidos, {params.errors ?? "0"} con error.
-        </p>
-      )}
-      {params.sync === "error" && (
-        <p className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-          Error de sincronización: {params.detail ?? "Revisá configuración y permisos del Sheet."}
-        </p>
-      )}
+      <Suspense fallback={null}>
+        <CatalogSyncToast />
+      </Suspense>
 
       {products.length === 0 ? (
         <p className="mt-8 text-foreground/75">No hay productos cargados.</p>

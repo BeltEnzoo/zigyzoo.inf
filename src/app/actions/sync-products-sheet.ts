@@ -1,125 +1,51 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
+import { getCatalogSource, SHEET_CATALOG_TAG } from "@/lib/catalog/catalog-source";
+import {
+  fetchSheetRows,
+  pick,
+  slugify,
+  titleFromSlug,
+  CATEGORY_COLOR_BY_SLUG,
+} from "@/lib/catalog/google-sheet";
+import { splitAlignedToSizes } from "@/lib/catalog/variant-extras";
 import { getAdminSession } from "@/lib/auth/session";
 import { getSql } from "@/lib/db/neon";
-
-type RowMap = Record<string, string>;
-
-const DEFAULT_SHEET_ID = "1u_Zhj0dOpXNtVnRcYwJSLmvJysbz5gvxc4n5R-FwZJQ";
-const DEFAULT_GID = "0";
-const CATEGORY_COLOR_BY_SLUG: Record<string, string> = {
-  bebes: "#C08081",
-  "juegos-juguetes-aire-libre": "#1DB40F",
-  "juegos-juguetes-aprendizaje-ingenio": "#BC31DE",
-  maternidad: "#FFEB5C",
-};
-
-function slugify(s: string) {
-  return s
-    .trim()
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "");
-}
-
-function titleFromSlug(slug: string) {
-  return slug
-    .split("-")
-    .filter(Boolean)
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(" ");
-}
-
-function parseCsv(text: string): string[][] {
-  const rows: string[][] = [];
-  let row: string[] = [];
-  let cell = "";
-  let inQuotes = false;
-
-  for (let i = 0; i < text.length; i++) {
-    const ch = text[i];
-    const next = text[i + 1];
-
-    if (ch === '"') {
-      if (inQuotes && next === '"') {
-        cell += '"';
-        i++;
-      } else {
-        inQuotes = !inQuotes;
-      }
-      continue;
-    }
-
-    if (!inQuotes && ch === ",") {
-      row.push(cell);
-      cell = "";
-      continue;
-    }
-
-    if (!inQuotes && (ch === "\n" || ch === "\r")) {
-      if (ch === "\r" && next === "\n") i++;
-      row.push(cell);
-      cell = "";
-      if (row.some((c) => c.trim().length > 0)) rows.push(row);
-      row = [];
-      continue;
-    }
-
-    cell += ch;
-  }
-
-  if (cell.length > 0 || row.length > 0) {
-    row.push(cell);
-    if (row.some((c) => c.trim().length > 0)) rows.push(row);
-  }
-  return rows;
-}
-
-function normalizeHeader(raw: string): string {
-  return raw.toLowerCase().replace(/\s+/g, "").trim();
-}
-
-function pick(r: RowMap, ...keys: string[]): string {
-  for (const k of keys) {
-    const v = r[k];
-    if (typeof v === "string" && v.trim().length) return v.trim();
-  }
-  return "";
-}
-
-async function fetchSheetRows(): Promise<RowMap[]> {
-  const sheetId = process.env.GOOGLE_SHEET_ID?.trim() || DEFAULT_SHEET_ID;
-  const gid = process.env.GOOGLE_SHEET_GID?.trim() || DEFAULT_GID;
-  const url = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=${gid}`;
-  const res = await fetch(url, { cache: "no-store" });
-  if (!res.ok) {
-    throw new Error("No se pudo leer Google Sheet. Revisá permisos de compartir.");
-  }
-  const csv = await res.text();
-  const matrix = parseCsv(csv);
-  if (!matrix.length) return [];
-
-  const headers = matrix[0].map(normalizeHeader);
-  const rows: RowMap[] = [];
-  for (let i = 1; i < matrix.length; i++) {
-    const line = matrix[i];
-    const row: RowMap = {};
-    for (let c = 0; c < headers.length; c++) {
-      if (!headers[c]) continue;
-      row[headers[c]] = (line[c] ?? "").trim();
-    }
-    rows.push(row);
-  }
-  return rows;
-}
 
 export async function syncProductsFromGoogleSheet() {
   const session = await getAdminSession();
   if (!session) redirect("/admin/login");
+
+  if (getCatalogSource() === "sheet") {
+    const sql = getSql();
+    if (!sql) {
+      redirect("/admin/productos?sync=error&detail=Falta+DATABASE_URL");
+    }
+    const staff = await sql`
+      select 1
+      from admin_users
+      where id = ${session.userId}::uuid and role in ('admin','editor')
+      limit 1
+    `;
+    if (!staff.length) redirect("/admin/login?error=sin_permiso");
+
+    try {
+      await fetchSheetRows();
+    } catch (e) {
+      redirect(
+        `/admin/productos?sync=error&detail=${encodeURIComponent(
+          e instanceof Error ? e.message : "No se pudo leer la hoja.",
+        )}`,
+      );
+    }
+
+    revalidateTag(SHEET_CATALOG_TAG, "max");
+    revalidatePath("/tienda");
+    revalidatePath("/admin/productos");
+    redirect("/admin/productos?sync=refresh");
+  }
 
   const sql = getSql();
   if (!sql) {
@@ -137,7 +63,9 @@ export async function syncProductsFromGoogleSheet() {
   let created = 0;
   let updated = 0;
   let skipped = 0;
+  let deleted = 0;
   const errors: string[] = [];
+  const processedSlugs = new Set<string>();
 
   const rows = await fetchSheetRows();
   for (let i = 0; i < rows.length; i++) {
@@ -156,6 +84,14 @@ export async function syncProductsFromGoogleSheet() {
     const categoryColorRaw = pick(row, "category_color", "categorycolor", "color_hex");
     const sizesRaw = pick(row, "sizes");
     const stocksRaw = pick(row, "stocks");
+    const colorProductoRaw = pick(row, "color_producto", "colorproducto");
+    const tamanoProductoRaw = pick(
+      row,
+      "tamaño_producto",
+      "tamañoproducto",
+      "tamano_producto",
+      "tamanoproducto",
+    );
     const imageUrlsRaw = pick(row, "image_urls", "imageurls");
 
     if (!name || !slug || !priceRaw) {
@@ -212,8 +148,8 @@ export async function syncProductsFromGoogleSheet() {
       else created++;
 
       const upserted = await sql`
-        insert into products (name, slug, description, price, currency, is_active, category_id)
-        values (${name}, ${slug}, ${description}, ${price}, ${currency}, ${isActive}, ${categoryId})
+        insert into products (name, slug, description, price, currency, is_active, category_id, sheet_managed)
+        values (${name}, ${slug}, ${description}, ${price}, ${currency}, ${isActive}, ${categoryId}, true)
         on conflict (slug)
         do update set
           name = excluded.name,
@@ -221,7 +157,8 @@ export async function syncProductsFromGoogleSheet() {
           price = excluded.price,
           currency = excluded.currency,
           is_active = excluded.is_active,
-          category_id = excluded.category_id
+          category_id = excluded.category_id,
+          sheet_managed = true
         returning id
       `;
       const productId = (upserted[0] as { id: string } | undefined)?.id;
@@ -229,6 +166,8 @@ export async function syncProductsFromGoogleSheet() {
         errors.push(`Fila ${rowNum}: no se pudo guardar producto.`);
         continue;
       }
+
+      processedSlugs.add(slug);
 
       const sizes = sizesRaw
         .split(";")
@@ -240,11 +179,13 @@ export async function syncProductsFromGoogleSheet() {
         .filter((n) => Number.isFinite(n) && n >= 0);
 
       if (sizes.length && stocks.length && sizes.length === stocks.length) {
+        const colors = splitAlignedToSizes(sizes.length, colorProductoRaw);
+        const tamanos = splitAlignedToSizes(sizes.length, tamanoProductoRaw);
         await sql`delete from product_variants where product_id = ${productId}::uuid`;
         for (let v = 0; v < sizes.length; v++) {
           await sql`
-            insert into product_variants (product_id, size_label, stock, sort_order)
-            values (${productId}::uuid, ${sizes[v]}, ${stocks[v]}, ${v})
+            insert into product_variants (product_id, size_label, stock, sort_order, color_producto, tamano_producto)
+            values (${productId}::uuid, ${sizes[v]}, ${stocks[v]}, ${v}, ${colors[v]}, ${tamanos[v]})
           `;
         }
       }
@@ -276,10 +217,23 @@ export async function syncProductsFromGoogleSheet() {
     }
   }
 
+  const shouldPruneSheetOrphans = rows.length === 0 || processedSlugs.size > 0;
+  if (shouldPruneSheetOrphans) {
+    const keep = rows.length === 0 ? new Set<string>() : processedSlugs;
+    const managed = await sql`
+      select id, slug from products where sheet_managed = true
+    `;
+    for (const row of managed as { id: string; slug: string }[]) {
+      if (!keep.has(row.slug)) {
+        await sql`delete from products where id = ${row.id}::uuid`;
+        deleted++;
+      }
+    }
+  }
+
   revalidatePath("/tienda");
   revalidatePath("/admin/productos");
   redirect(
-    `/admin/productos?sync=ok&created=${created}&updated=${updated}&skipped=${skipped}&errors=${errors.length}`,
+    `/admin/productos?sync=ok&created=${created}&updated=${updated}&skipped=${skipped}&errors=${errors.length}&deleted=${deleted}`,
   );
 }
-

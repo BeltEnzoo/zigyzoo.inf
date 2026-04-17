@@ -18,6 +18,10 @@ export default async function ProductoPage({ params }: Props) {
   if (!product) notFound();
 
   const totalStock = product.product_variants.reduce((s, v) => s + v.stock, 0);
+  const variants = product.product_variants;
+  const hasColor = variants.some((v) => (v.color_producto?.trim() ?? "") !== "");
+  const hasTamano = variants.some((v) => (v.tamano_producto?.trim() ?? "") !== "");
+  const showVariantColumns = hasColor || hasTamano;
   const wa = getWhatsAppUrl(
     `Hola, consulto por el producto: ${product.name} (${product.slug})`,
   );
@@ -61,6 +65,16 @@ export default async function ProductoPage({ params }: Props) {
                 </div>
               ))
             )}
+            {product.description && (
+              <div className="rounded-2xl border border-black/5 bg-surface-ice/40 px-4 py-4 sm:px-5">
+                <p className="text-xs font-semibold uppercase tracking-wide text-foreground/55">
+                  Descripción
+                </p>
+                <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-foreground/85 sm:text-base">
+                  {product.description}
+                </p>
+              </div>
+            )}
           </div>
 
           <div>
@@ -84,11 +98,6 @@ export default async function ProductoPage({ params }: Props) {
             <p className="mt-4 text-3xl font-bold text-foreground">
               {formatMoney(product.price, product.currency)}
             </p>
-            {product.description && (
-              <p className="mt-6 whitespace-pre-wrap text-foreground/85 leading-relaxed">
-                {product.description}
-              </p>
-            )}
 
             <AddToCart
               product={{
@@ -102,29 +111,55 @@ export default async function ProductoPage({ params }: Props) {
                   id: v.id,
                   size_label: v.size_label,
                   stock: v.stock,
+                  color_producto: v.color_producto,
+                  tamano_producto: v.tamano_producto,
                 })),
               }}
             />
 
             <div className="mt-8">
-              <h2 className="font-display text-lg font-bold text-brand">Stock por talle</h2>
-              <table className="mt-3 w-full max-w-md text-sm">
+              <h2 className="font-display text-lg font-bold text-brand">Stock por variante</h2>
+              <table className="mt-3 w-full max-w-2xl text-sm">
                 <thead>
                   <tr className="border-b border-black/10 text-left text-foreground/60">
-                    <th className="pb-2 font-semibold">Talle</th>
+                    {showVariantColumns ? (
+                      <>
+                        {hasColor && <th className="pb-2 pr-3 font-semibold">Color</th>}
+                        {hasTamano && <th className="pb-2 pr-3 font-semibold">Tamaño</th>}
+                        <th className="pb-2 pr-3 font-semibold">Talle</th>
+                      </>
+                    ) : (
+                      <th className="pb-2 pr-3 font-semibold">Talle</th>
+                    )}
                     <th className="pb-2 font-semibold">Stock</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {product.product_variants.map((v) => (
+                  {variants.map((v) => (
                     <tr key={v.id} className="border-b border-black/5">
-                      <td className="py-2 font-medium">{v.size_label}</td>
+                      {showVariantColumns ? (
+                        <>
+                          {hasColor && (
+                            <td className="py-2 pr-3 font-medium">
+                              {v.color_producto?.trim() || "—"}
+                            </td>
+                          )}
+                          {hasTamano && (
+                            <td className="py-2 pr-3 font-medium">
+                              {v.tamano_producto?.trim() || "—"}
+                            </td>
+                          )}
+                          <td className="py-2 pr-3 font-medium">{v.size_label}</td>
+                        </>
+                      ) : (
+                        <td className="py-2 pr-3 font-medium">{v.size_label}</td>
+                      )}
                       <td className="py-2">{v.stock > 0 ? v.stock : "—"}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
-              {product.product_variants.length === 0 && (
+              {variants.length === 0 && (
                 <p className="text-sm text-foreground/65">Sin variantes cargadas.</p>
               )}
             </div>

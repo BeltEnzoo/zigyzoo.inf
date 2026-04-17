@@ -1,25 +1,41 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import { CategoryFilter } from "@/components/shop/CategoryFilter";
 import { DemoBanner } from "@/components/shop/DemoBanner";
 import { ProductCard } from "@/components/shop/ProductCard";
+import { VariantAttributeFilters } from "@/components/shop/VariantAttributeFilters";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { getCategories, getProducts, isShopDatabaseConfigured } from "@/data/shop";
+import { buildTiendaHref } from "@/lib/shop/tienda-href";
+import { collectVariantFacetValues } from "@/lib/shop/variant-facets";
 
 export const dynamic = "force-dynamic";
 
 type Props = {
-  searchParams: Promise<{ categoria?: string; q?: string }>;
+  searchParams: Promise<{ categoria?: string; q?: string; color?: string; tamano?: string }>;
 };
 
 export default async function TiendaPage({ searchParams }: Props) {
-  const { categoria, q } = await searchParams;
+  const { categoria, q, color, tamano } = await searchParams;
   const configured = isShopDatabaseConfigured();
   const query = (q ?? "").trim();
-  const [categories, products] = await Promise.all([
+  const colorProducto = (color ?? "").trim();
+  const tamanoProducto = (tamano ?? "").trim();
+
+  const [categories, forFacets, products] = await Promise.all([
     getCategories(),
     getProducts({ categorySlug: categoria, q: query }),
+    getProducts({
+      categorySlug: categoria,
+      q: query,
+      colorProducto: colorProducto || undefined,
+      tamanoProducto: tamanoProducto || undefined,
+    }),
   ]);
+
+  const colorOptions = collectVariantFacetValues(forFacets, "color_producto");
+  const tamanoOptions = collectVariantFacetValues(forFacets, "tamano_producto");
 
   return (
     <>
@@ -48,6 +64,8 @@ export default async function TiendaPage({ searchParams }: Props) {
               className="w-full rounded-2xl border border-black/10 bg-white px-4 py-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
             />
             {categoria && <input type="hidden" name="categoria" value={categoria} />}
+            {colorProducto && <input type="hidden" name="color" value={colorProducto} />}
+            {tamanoProducto && <input type="hidden" name="tamano" value={tamanoProducto} />}
             <button
               type="submit"
               className="inline-flex min-h-11 items-center justify-center rounded-full bg-brand px-5 text-sm font-bold text-white hover:brightness-110"
@@ -56,7 +74,11 @@ export default async function TiendaPage({ searchParams }: Props) {
             </button>
             {query && (
               <Link
-                href={categoria ? `/tienda?categoria=${encodeURIComponent(categoria)}` : "/tienda"}
+                href={buildTiendaHref({
+                  categoria,
+                  color: colorProducto,
+                  tamano: tamanoProducto,
+                })}
                 className="text-sm font-semibold text-brand underline"
               >
                 Limpiar búsqueda
@@ -67,7 +89,19 @@ export default async function TiendaPage({ searchParams }: Props) {
 
         {categories.length > 0 && (
           <div className="mb-10">
-            <CategoryFilter categories={categories} activeSlug={categoria} />
+            <CategoryFilter
+              categories={categories}
+              activeSlug={categoria}
+              preserve={{ q: query, color: colorProducto, tamano: tamanoProducto }}
+            />
+          </div>
+        )}
+
+        {(colorOptions.length > 0 || tamanoOptions.length > 0) && (
+          <div className="mb-8">
+            <Suspense fallback={null}>
+              <VariantAttributeFilters colorOptions={colorOptions} tamanoOptions={tamanoOptions} />
+            </Suspense>
           </div>
         )}
 

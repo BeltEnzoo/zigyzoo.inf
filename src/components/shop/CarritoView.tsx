@@ -57,7 +57,7 @@ export function CarritoView() {
                   {line.name}
                 </Link>
                 <p className="text-sm text-foreground/65">
-                  Talle {line.sizeLabel} · {formatMoney(line.price, line.currency)} c/u
+                  {line.sizeLabel} · {formatMoney(line.price, line.currency)} c/u
                 </p>
               </div>
             </div>

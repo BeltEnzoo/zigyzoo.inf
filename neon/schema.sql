@@ -31,6 +31,7 @@ create table if not exists public.products (
   price numeric(12, 2) not null check (price >= 0),
   currency text not null default 'ARS',
   is_active boolean not null default true,
+  sheet_managed boolean not null default false,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -42,7 +43,8 @@ create table if not exists public.product_variants (
   sku text,
   stock int not null default 0 check (stock >= 0),
   sort_order int not null default 0,
-  unique (product_id, size_label)
+  color_producto text,
+  tamano_producto text
 );
 
 create table if not exists public.product_images (
