@@ -10,6 +10,7 @@ import {
   titleFromSlug,
   CATEGORY_COLOR_BY_SLUG,
 } from "@/lib/catalog/google-sheet";
+import { parseProductImageUrls } from "@/lib/catalog/image-urls";
 import { splitAlignedToSizes } from "@/lib/catalog/variant-extras";
 import { getAdminSession } from "@/lib/auth/session";
 import { getSql } from "@/lib/db/neon";
@@ -199,10 +200,7 @@ export async function syncProductsFromGoogleSheet() {
         `;
       }
 
-      const imageUrls = imageUrlsRaw
-        .split("|")
-        .map((s) => s.trim())
-        .filter((s) => s.startsWith("http://") || s.startsWith("https://"));
+      const imageUrls = parseProductImageUrls(imageUrlsRaw);
       if (imageUrls.length) {
         await sql`delete from product_images where product_id = ${productId}::uuid`;
         for (let im = 0; im < imageUrls.length; im++) {

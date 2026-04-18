@@ -1,3 +1,4 @@
+import { parseProductImageUrls } from "@/lib/catalog/image-urls";
 import { splitAlignedToSizes } from "@/lib/catalog/variant-extras";
 import type { Category, ProductListItem } from "@/types/shop";
 
@@ -231,10 +232,7 @@ export function parseRowsToProductListItems(rows: RowMap[]): ProductListItem[] {
       }
     }
 
-    const imageUrls = imageUrlsRaw
-      .split("|")
-      .map((s) => s.trim())
-      .filter((s) => s.startsWith("http://") || s.startsWith("https://"));
+    const imageUrls = parseProductImageUrls(imageUrlsRaw);
 
     const product_images: ProductListItem["product_images"] = [];
     for (let im = 0; im < imageUrls.length; im++) {

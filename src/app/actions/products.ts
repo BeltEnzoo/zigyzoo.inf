@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { getCatalogSource } from "@/lib/catalog/catalog-source";
+import { parseProductImageUrls } from "@/lib/catalog/image-urls";
 import { getAdminSession } from "@/lib/auth/session";
 import { getSql } from "@/lib/db/neon";
 
@@ -59,8 +60,7 @@ export async function createProduct(formData: FormData): Promise<CreateProductRe
 
   const imageUrls = imageBlock
     .split(/\r?\n/)
-    .map((l) => l.trim())
-    .filter(Boolean);
+    .flatMap((l) => parseProductImageUrls(l));
 
   const variantLines = variantBlock.split(/\r?\n/).filter((l) => l.trim());
   if (variantLines.length === 0) {

@@ -98,11 +98,14 @@ export function ProductCreateForm({ categories }: { categories: Category[] }) {
           id="image_urls"
           name="image_urls"
           rows={4}
-          placeholder={"https://ejemplo.com/foto1.jpg\nhttps://ejemplo.com/foto2.jpg"}
+          placeholder={
+            "https://ejemplo.com/foto1.jpg\nhttps://ejemplo.com/foto2.jpg\n(o varias en una línea con | o ;)"
+          }
           className="w-full rounded-2xl border border-black/10 bg-white px-4 py-3 font-mono text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/25"
         />
         <p className="mt-1 text-xs text-foreground/60">
-          Una URL por línea. Imágenes recomendadas: <strong>{PRODUCT_IMAGE_SPEC_LABEL}</strong>{" "}
+          Una o más URLs por línea; en la misma línea podés separar con <strong>|</strong> o{" "}
+          <strong>;</strong>. Imágenes recomendadas: <strong>{PRODUCT_IMAGE_SPEC_LABEL}</strong>{" "}
           (proporción vertical de ficha).
         </p>
       </div>
