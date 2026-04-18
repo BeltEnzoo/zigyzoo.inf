@@ -22,11 +22,25 @@ type Props = {
     imageUrl: string | null;
     variants: Variant[];
   };
+  /** Ficha de producto: listar todas las variantes (p. ej. para alinear con fotos por índice). */
+  listAllVariants?: boolean;
+  /** Modo controlado desde el padre (galería sincronizada). */
+  variantId?: string;
+  onVariantChange?: (variantId: string) => void;
 };
 
-export function AddToCart({ product }: Props) {
+export function AddToCart({
+  product,
+  listAllVariants = false,
+  variantId: controlledVariantId,
+  onVariantChange,
+}: Props) {
   const addOrUpdateLine = useCartStore((s) => s.addOrUpdateLine);
-  const [variantId, setVariantId] = useState<string>("");
+  const isControlled = typeof onVariantChange === "function";
+  const [internalVariantId, setInternalVariantId] = useState<string>("");
+  const variantId = isControlled ? (controlledVariantId ?? "") : internalVariantId;
+  const setVariantId = isControlled ? onVariantChange! : setInternalVariantId;
+
   const [qty, setQty] = useState(1);
   const [feedback, setFeedback] = useState<string | null>(null);
 
@@ -34,6 +48,11 @@ export function AddToCart({ product }: Props) {
     () => product.variants.filter((v) => v.stock > 0),
     [product.variants],
   );
+
+  const variantsForSelect = useMemo(() => {
+    if (listAllVariants) return product.variants;
+    return variantsInStock;
+  }, [listAllVariants, product.variants, variantsInStock]);
 
   const showVariantHint = useMemo(
     () =>
@@ -46,10 +65,11 @@ export function AddToCart({ product }: Props) {
   );
 
   useEffect(() => {
+    if (isControlled) return;
     if (!variantId && variantsInStock.length > 0) {
-      setVariantId(variantsInStock[0].id);
+      setInternalVariantId(variantsInStock[0].id);
     }
-  }, [variantId, variantsInStock]);
+  }, [isControlled, variantId, variantsInStock]);
 
   const selected = product.variants.find((v) => v.id === variantId);
   const maxQty = selected?.stock ?? 0;
@@ -80,7 +100,13 @@ export function AddToCart({ product }: Props) {
     setFeedback("Agregado al carrito.");
   }
 
-  if (variantsInStock.length === 0) {
+  if (product.variants.length === 0) {
+    return (
+      <p className="text-sm text-foreground/65">No hay variantes cargadas.</p>
+    );
+  }
+
+  if (!listAllVariants && variantsInStock.length === 0) {
     return (
       <p className="text-sm text-foreground/65">No hay variantes con stock por ahora.</p>
     );
@@ -109,10 +135,11 @@ export function AddToCart({ product }: Props) {
             setQty(1);
           }}
         >
-          <option value="">Elegí una variante</option>
-          {variantsInStock.map((v) => (
+          {!isControlled && <option value="">Elegí una variante</option>}
+          {variantsForSelect.map((v) => (
             <option key={v.id} value={v.id}>
-              {formatVariantOptionLabel(v)} ({v.stock} disponibles)
+              {formatVariantOptionLabel(v)}
+              {v.stock > 0 ? ` (${v.stock} disponibles)` : " (sin stock)"}
             </option>
           ))}
         </select>

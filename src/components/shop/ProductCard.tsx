@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ProductCardAdd } from "@/components/shop/ProductCardAdd";
+import { ProductCardDescription } from "@/components/shop/ProductCardDescription";
 import { formatMoney } from "@/lib/format";
 import { productImageFrameClass, productImageImgClass } from "@/lib/shop/product-image-spec";
 import type { ProductListItem } from "@/types/shop";
@@ -59,11 +60,7 @@ export function ProductCard({ product }: { product: ProductListItem }) {
           </span>
         )}
       </Link>
-      {descriptionPreview && (
-        <p className="line-clamp-3 border-b border-black/[0.06] bg-surface-ice/30 px-4 py-2.5 text-sm leading-snug text-foreground/75">
-          {descriptionPreview}
-        </p>
-      )}
+      {descriptionPreview && <ProductCardDescription text={descriptionPreview} />}
       <div className="flex flex-1 flex-col p-4">
         {categoryList.length > 0 && (
           <div className="flex flex-wrap gap-1.5">

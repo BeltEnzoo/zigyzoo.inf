@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { sendContactEmail } from "@/lib/email/send-contact-email";
 
 const MAX_LEN = 4000;
 
@@ -40,8 +41,20 @@ export async function POST(req: Request) {
     );
   }
 
-  // Tratamiento conforme política de privacidad publicada; persistir o enviar mail según implementación.
-  console.info("[contact]", { name: nameStr, email: emailStr, phone: phoneStr, text: textStr });
+  const result = await sendContactEmail({
+    name: nameStr,
+    email: emailStr,
+    phone: phoneStr,
+    body: textStr,
+  });
+
+  if (!result.ok) {
+    if (result.code === "not_configured") {
+      console.warn("[contact]", result.message);
+      return NextResponse.json({ ok: false, error: result.message }, { status: 503 });
+    }
+    return NextResponse.json({ ok: false, error: result.message }, { status: 502 });
+  }
 
   return NextResponse.json({ ok: true });
 }

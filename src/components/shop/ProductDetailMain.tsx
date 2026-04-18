@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { AddToCart } from "@/components/shop/AddToCart";
 import { ProductImageGallery } from "@/components/shop/ProductImageGallery";
 import { formatMoney } from "@/lib/format";
@@ -17,10 +17,45 @@ export function ProductDetailMain({ product, whatsappHref }: Props) {
     [product.product_images],
   );
 
+  const sortedVariants = useMemo(
+    () => [...product.product_variants].sort((a, b) => a.sort_order - b.sort_order),
+    [product.product_variants],
+  );
+
   const [imageIndex, setImageIndex] = useState(0);
-  const last = Math.max(0, sortedImages.length - 1);
-  const safeIdx = sortedImages.length === 0 ? 0 : Math.min(imageIndex, last);
+  const [variantId, setVariantId] = useState<string>(() => sortedVariants[0]?.id ?? "");
+
+  useEffect(() => {
+    setImageIndex(0);
+    setVariantId(sortedVariants[0]?.id ?? "");
+    // Solo al navegar a otro producto (mismo orden que las fotos en catálogo).
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- sortedVariants deriva de product
+  }, [product.id]);
+
+  const safeIdx =
+    sortedImages.length === 0 ? 0 : Math.min(imageIndex, Math.max(0, sortedImages.length - 1));
   const activeImageUrl = sortedImages[safeIdx]?.url ?? null;
+
+  const handleImageIndexChange = useCallback(
+    (i: number) => {
+      setImageIndex(i);
+      if (sortedVariants.length === 0) return;
+      const vi = Math.min(i, sortedVariants.length - 1);
+      const v = sortedVariants[vi];
+      if (v) setVariantId(v.id);
+    },
+    [sortedVariants],
+  );
+
+  const handleVariantChange = useCallback(
+    (id: string) => {
+      setVariantId(id);
+      if (sortedImages.length === 0) return;
+      const j = sortedVariants.findIndex((v) => v.id === id);
+      if (j >= 0) setImageIndex(Math.min(j, sortedImages.length - 1));
+    },
+    [sortedImages, sortedVariants],
+  );
 
   const variants = product.product_variants;
   const hasColor = variants.some((v) => (v.color_producto?.trim() ?? "") !== "");
@@ -36,8 +71,14 @@ export function ProductDetailMain({ product, whatsappHref }: Props) {
         <ProductImageGallery
           images={galleryImages}
           activeIndex={imageIndex}
-          onActiveIndexChange={setImageIndex}
+          onActiveIndexChange={handleImageIndexChange}
         />
+        {sortedImages.length > 1 && sortedVariants.length > 1 && (
+          <p className="text-xs leading-relaxed text-foreground/55">
+            Cada foto se empareja con la variante en el mismo orden (primera imagen ↔ primera opción).
+            Si hay distinta cantidad de fotos y variantes, se usa el índice disponible.
+          </p>
+        )}
         {product.description && (
           <div className="rounded-2xl border border-black/5 bg-surface-ice/40 px-4 py-4 sm:px-5">
             <p className="text-xs font-semibold uppercase tracking-wide text-foreground/55">
@@ -73,6 +114,9 @@ export function ProductDetailMain({ product, whatsappHref }: Props) {
         </p>
 
         <AddToCart
+          listAllVariants
+          variantId={variantId}
+          onVariantChange={handleVariantChange}
           product={{
             id: product.id,
             slug: product.slug,
@@ -80,7 +124,7 @@ export function ProductDetailMain({ product, whatsappHref }: Props) {
             price: product.price,
             currency: product.currency,
             imageUrl: activeImageUrl,
-            variants: product.product_variants.map((v) => ({
+            variants: sortedVariants.map((v) => ({
               id: v.id,
               size_label: v.size_label,
               stock: v.stock,
