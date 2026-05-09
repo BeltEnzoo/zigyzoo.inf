@@ -66,9 +66,9 @@ export function FaqSection() {
             >
               <summary className="cursor-pointer list-none py-4 font-semibold text-brand outline-none marker:content-none [&::-webkit-details-marker]:hidden">
                 <span className="flex items-center justify-between gap-3">
-                  {item.q}
+                  <span className="min-w-0 break-words pr-2">{item.q}</span>
                   <span
-                    className="text-xl leading-none text-brand/60 transition group-open:rotate-45"
+                    className="shrink-0 text-xl leading-none text-brand/60 transition group-open:rotate-45"
                     aria-hidden
                   >
                     +

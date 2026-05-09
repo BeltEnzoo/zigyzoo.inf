@@ -59,7 +59,7 @@ export function ContactForm() {
           type="text"
           required
           autoComplete="name"
-          className="w-full rounded-2xl border border-black/10 bg-white px-4 py-3 text-foreground shadow-sm outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/25"
+          className="min-h-12 w-full rounded-2xl border border-black/10 bg-white px-4 py-3 text-[16px] text-foreground shadow-sm outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/25 sm:text-sm"
           placeholder="Tu nombre"
         />
       </div>
@@ -73,7 +73,7 @@ export function ContactForm() {
           type="email"
           required
           autoComplete="email"
-          className="w-full rounded-2xl border border-black/10 bg-white px-4 py-3 text-foreground shadow-sm outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/25"
+          className="min-h-12 w-full rounded-2xl border border-black/10 bg-white px-4 py-3 text-[16px] text-foreground shadow-sm outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/25 sm:text-sm"
           placeholder="nombre@ejemplo.com"
         />
       </div>
@@ -86,7 +86,7 @@ export function ContactForm() {
           name="phone"
           type="tel"
           autoComplete="tel"
-          className="w-full rounded-2xl border border-black/10 bg-white px-4 py-3 text-foreground shadow-sm outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/25"
+          className="min-h-12 w-full rounded-2xl border border-black/10 bg-white px-4 py-3 text-[16px] text-foreground shadow-sm outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/25 sm:text-sm"
           placeholder="+54 9 ..."
         />
       </div>
@@ -99,7 +99,7 @@ export function ContactForm() {
           name="body"
           required
           rows={5}
-          className="w-full resize-y rounded-2xl border border-black/10 bg-white px-4 py-3 text-foreground shadow-sm outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/25"
+          className="w-full resize-y rounded-2xl border border-black/10 bg-white px-4 py-3 text-[16px] text-foreground shadow-sm outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/25 sm:text-sm"
           placeholder="Escribinos tu consulta..."
         />
       </div>

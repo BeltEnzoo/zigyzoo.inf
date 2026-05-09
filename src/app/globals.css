@@ -2,6 +2,7 @@
 
 html {
   scroll-behavior: smooth;
+  overflow-x: clip;
 }
 
 :root {
@@ -38,4 +39,7 @@ body {
   background: var(--color-fondo-pagina);
   color: var(--color-texto);
   font-family: var(--font-quicksand), ui-sans-serif, system-ui, sans-serif;
+  overflow-x: clip;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }

@@ -81,7 +81,7 @@ export function ProductImageGallery({ images, activeIndex, onActiveIndexChange }
             <button
               type="button"
               onClick={() => go(-1)}
-              className="absolute left-2 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-white/20 bg-black/45 text-white shadow-md backdrop-blur-sm transition hover:bg-black/60 focus-visible:outline focus-visible:ring-2 focus-visible:ring-white/80"
+              className="absolute left-2 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/20 bg-black/45 text-white shadow-md backdrop-blur-sm transition hover:bg-black/60 focus-visible:outline focus-visible:ring-2 focus-visible:ring-white/80 sm:h-10 sm:w-10"
               aria-label="Imagen anterior"
             >
               <ChevronLeftIcon />
@@ -89,7 +89,7 @@ export function ProductImageGallery({ images, activeIndex, onActiveIndexChange }
             <button
               type="button"
               onClick={() => go(1)}
-              className="absolute right-2 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-white/20 bg-black/45 text-white shadow-md backdrop-blur-sm transition hover:bg-black/60 focus-visible:outline focus-visible:ring-2 focus-visible:ring-white/80"
+              className="absolute right-2 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/20 bg-black/45 text-white shadow-md backdrop-blur-sm transition hover:bg-black/60 focus-visible:outline focus-visible:ring-2 focus-visible:ring-white/80 sm:h-10 sm:w-10"
               aria-label="Imagen siguiente"
             >
               <ChevronRightIcon />
@@ -102,7 +102,7 @@ export function ProductImageGallery({ images, activeIndex, onActiveIndexChange }
       </div>
 
       {n > 1 && (
-        <div className="flex gap-2 overflow-x-auto pb-1 pt-0.5 [scrollbar-width:thin]">
+        <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-2 pt-0.5 [-webkit-overflow-scrolling:touch] [scrollbar-width:thin]">
           {images.map((im, i) => {
             const selected = i === idx;
             return (

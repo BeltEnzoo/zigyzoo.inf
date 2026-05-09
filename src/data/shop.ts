@@ -64,6 +64,56 @@ export async function getProducts(opts: ListOpts = {}): Promise<ProductListItem[
   }
 }
 
+const SIMILAR_PRODUCTS_LIMIT = 8;
+
+/**
+ * Productos relacionados: mismas categorías que el actual (sin duplicar).
+ * Si no hay categorías, completa con otros productos activos del catálogo.
+ */
+export async function getSimilarProducts(
+  product: Pick<ProductDetail, "id" | "categories" | "categories_all">,
+  limit = SIMILAR_PRODUCTS_LIMIT,
+): Promise<{ products: ProductListItem[]; matchedByCategories: boolean }> {
+  const cats =
+    product.categories_all && product.categories_all.length > 0
+      ? product.categories_all
+      : product.categories
+        ? [product.categories]
+        : [];
+  const matchedByCategories = cats.length > 0;
+
+  const seen = new Set<string>();
+  const pushUnique = (rows: ProductListItem[], bucket: ProductListItem[]) => {
+    for (const p of rows) {
+      if (p.id === product.id || seen.has(p.id)) continue;
+      seen.add(p.id);
+      bucket.push(p);
+      if (bucket.length >= limit) return true;
+    }
+    return false;
+  };
+
+  const out: ProductListItem[] = [];
+
+  if (cats.length > 0) {
+    const lists = await Promise.all(
+      cats.map((c) => getProducts({ categorySlug: c.slug })),
+    );
+    for (const rows of lists) {
+      if (pushUnique(rows, out)) {
+        return { products: out.slice(0, limit), matchedByCategories: true };
+      }
+    }
+  }
+
+  if (out.length < limit) {
+    const rest = await getProducts({});
+    pushUnique(rest, out);
+  }
+
+  return { products: out.slice(0, limit), matchedByCategories };
+}
+
 export async function getProductBySlug(
   slug: string,
   includeInactive = false,

@@ -26,6 +26,8 @@ export function ProductCard({ product }: { product: ProductListItem }) {
   const img = firstImage(product);
   const stock = totalStock(product);
   const available = stock > 0;
+  const variantCount = product.product_variants?.length ?? 0;
+  const showVariantBadge = variantCount > 1;
   const categoryList =
     product.categories_all && product.categories_all.length
       ? product.categories_all
@@ -59,6 +61,14 @@ export function ProductCard({ product }: { product: ProductListItem }) {
             Sin stock
           </span>
         )}
+        {showVariantBadge && (
+          <span
+            className="pointer-events-none absolute bottom-3 right-3 max-w-[calc(100%-1rem)] truncate rounded-full bg-white/95 px-2.5 py-1 text-center text-[11px] font-bold leading-tight text-brand shadow-md ring-1 ring-black/10"
+            title={`Este producto tiene ${variantCount} variantes; entrá para ver colores, talles u opciones.`}
+          >
+            {variantCount} variantes
+          </span>
+        )}
       </Link>
       {descriptionPreview && <ProductCardDescription text={descriptionPreview} />}
       <div className="flex flex-1 flex-col p-4">
@@ -79,8 +89,8 @@ export function ProductCard({ product }: { product: ProductListItem }) {
             ))}
           </div>
         )}
-        <Link href={`/tienda/${product.slug}`}>
-          <h2 className="mt-1 font-display text-lg font-bold text-brand">{product.name}</h2>
+        <Link href={`/tienda/${product.slug}`} className="min-w-0">
+          <h2 className="mt-1 break-words font-display text-lg font-bold text-brand">{product.name}</h2>
         </Link>
         <p className="mt-2 text-lg font-bold text-foreground">{formatMoney(product.price, product.currency)}</p>
         <p className="mt-1 text-xs text-foreground/60">

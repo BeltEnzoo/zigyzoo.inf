@@ -1,6 +1,8 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import { CartIcon } from "@/components/shop/CartLink";
 import { formatVariantOptionLabel } from "@/lib/shop/variant-label";
 import { useCartStore } from "@/store/cart";
 import type { ProductListItem } from "@/types/shop";
@@ -11,6 +13,7 @@ type Props = {
 };
 
 export function ProductCardAdd({ product, imageUrl }: Props) {
+  const router = useRouter();
   const addOrUpdateLine = useCartStore((s) => s.addOrUpdateLine);
   const variantsInStock = useMemo(
     () => product.product_variants.filter((v) => v.stock > 0),
@@ -37,11 +40,8 @@ export function ProductCardAdd({ product, imageUrl }: Props) {
 
   const selected = product.product_variants.find((v) => v.id === variantId);
 
-  function handleAdd(e: React.MouseEvent) {
-    e.preventDefault();
-    e.stopPropagation();
-    setMsg(null);
-    if (!selected || selected.stock <= 0) return;
+  function addOneToCart() {
+    if (!selected || selected.stock <= 0) return false;
     addOrUpdateLine({
       productId: product.id,
       slug: product.slug,
@@ -54,8 +54,24 @@ export function ProductCardAdd({ product, imageUrl }: Props) {
       quantity: 1,
       maxStock: selected.stock,
     });
+    return true;
+  }
+
+  function handleAdd(e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    setMsg(null);
+    if (!addOneToCart()) return;
     setMsg("¡Listo!");
     window.setTimeout(() => setMsg(null), 2000);
+  }
+
+  function handleBuyNow(e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    setMsg(null);
+    if (!addOneToCart()) return;
+    router.push("/carrito");
   }
 
   if (variantsInStock.length === 0) {
@@ -87,7 +103,7 @@ export function ProductCardAdd({ product, imageUrl }: Props) {
             ? "Orden en cada opción: color, tamaño, talle (si están cargados)"
             : undefined
         }
-        className="w-full rounded-xl border border-black/10 bg-white px-3 py-2 text-sm font-medium text-foreground outline-none focus:border-brand focus:ring-1 focus:ring-brand/30"
+        className="min-h-11 w-full rounded-xl border border-black/10 bg-white px-3 py-2 text-[16px] font-medium text-foreground outline-none focus:border-brand focus:ring-1 focus:ring-brand/30 sm:text-sm"
       >
         {variantsInStock.map((v) => (
           <option key={v.id} value={v.id}>
@@ -95,13 +111,23 @@ export function ProductCardAdd({ product, imageUrl }: Props) {
           </option>
         ))}
       </select>
-      <button
-        type="button"
-        onClick={handleAdd}
-        className="w-full rounded-full bg-brand py-2.5 text-sm font-bold text-white shadow-sm transition hover:brightness-110"
-      >
-        Agregar al carrito
-      </button>
+      <div className="flex flex-col gap-2">
+        <button
+          type="button"
+          onClick={handleAdd}
+          className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-brand px-3 py-2.5 text-sm font-bold text-white shadow-sm transition hover:brightness-110"
+        >
+          <CartIcon className="h-[1.125rem] w-[1.125rem] shrink-0 text-white" />
+          Añadir al carrito
+        </button>
+        <button
+          type="button"
+          onClick={handleBuyNow}
+          className="w-full rounded-full border-2 border-brand bg-transparent px-3 py-2.5 text-sm font-bold text-brand transition hover:bg-surface-ice"
+        >
+          Comprar ahora
+        </button>
+      </div>
       {msg && (
         <p className="text-center text-xs font-medium text-accent-sage" role="status">
           {msg}

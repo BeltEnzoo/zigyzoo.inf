@@ -12,7 +12,7 @@ export default function CarritoPage() {
   return (
     <>
       <SiteHeader />
-      <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-10 sm:px-6 sm:py-12">
+      <main className="mx-auto w-full min-w-0 max-w-3xl flex-1 px-4 py-10 sm:px-6 sm:py-12">
         <Link href="/tienda" className="text-sm font-semibold text-brand hover:underline">
           ← Seguir comprando
         </Link>

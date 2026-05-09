@@ -10,7 +10,7 @@ export function LoginForm({ initialError }: { initialError?: string }) {
   const [state, formAction, pending] = useActionState(loginAction, initialState);
 
   return (
-    <main className="mx-auto flex min-h-[80vh] max-w-md flex-col justify-center px-4 py-16">
+    <main className="mx-auto flex min-h-[80vh] max-w-md flex-col justify-center py-16 pl-[max(1rem,env(safe-area-inset-left,0px))] pr-[max(1rem,env(safe-area-inset-right,0px))] pb-[max(4rem,calc(4rem+env(safe-area-inset-bottom,0px)))]">
       <h1 className="font-display text-center text-2xl font-bold text-brand">Panel Zigyzoo</h1>
       <p className="mt-2 text-center text-sm text-foreground/70">
         Usuario y contraseña configurados en Neon (<code className="rounded bg-surface-ice px-1">admin_users</code>

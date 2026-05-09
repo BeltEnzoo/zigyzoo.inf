@@ -50,7 +50,9 @@ export function ClientesSection() {
               className="flex flex-col rounded-3xl border border-black/5 bg-white/90 p-6 shadow-sm"
             >
               <Stars />
-              <blockquote className="mt-4 flex-1 text-foreground/90">“{t.quote}”</blockquote>
+              <blockquote className="mt-4 flex-1 break-words text-foreground/90">
+                “{t.quote}”
+              </blockquote>
               <footer className="mt-6 border-t border-black/5 pt-4 text-sm">
                 <p className="font-semibold text-brand">{t.name}</p>
                 <p className="text-foreground/60">{t.detail}</p>

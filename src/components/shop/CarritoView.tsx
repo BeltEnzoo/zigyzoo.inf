@@ -52,7 +52,7 @@ export function CarritoView() {
               <div className="min-w-0 flex-1">
                 <Link
                   href={`/tienda/${line.slug}`}
-                  className="font-display font-bold text-brand hover:underline"
+                  className="break-words font-display font-bold text-brand hover:underline"
                 >
                   {line.name}
                 </Link>
@@ -65,16 +65,16 @@ export function CarritoView() {
               <div className="flex items-center gap-1 rounded-full border border-black/10 bg-white">
                 <button
                   type="button"
-                  className="px-3 py-2 text-lg leading-none text-brand hover:bg-surface-ice"
+                  className="flex min-h-11 min-w-11 items-center justify-center text-xl leading-none text-brand hover:bg-surface-ice"
                   onClick={() => setQuantity(line.lineId, line.quantity - 1)}
                   aria-label="Quitar uno"
                 >
                   −
                 </button>
-                <span className="min-w-8 text-center text-sm font-semibold">{line.quantity}</span>
+                <span className="min-w-9 text-center text-sm font-semibold">{line.quantity}</span>
                 <button
                   type="button"
-                  className="px-3 py-2 text-lg leading-none text-brand hover:bg-surface-ice"
+                  className="flex min-h-11 min-w-11 items-center justify-center text-xl leading-none text-brand hover:bg-surface-ice disabled:opacity-40"
                   onClick={() => setQuantity(line.lineId, line.quantity + 1)}
                   disabled={line.quantity >= line.maxStock}
                   aria-label="Agregar uno"

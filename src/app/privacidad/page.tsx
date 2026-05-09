@@ -15,7 +15,7 @@ export default function PrivacidadPage() {
   return (
     <>
       <SiteHeader />
-      <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-12 sm:px-6 sm:py-16">
+      <main className="mx-auto w-full min-w-0 max-w-3xl flex-1 px-4 py-12 sm:px-6 sm:py-16">
         <Link
           href="/"
           className="text-sm font-semibold text-brand hover:underline"

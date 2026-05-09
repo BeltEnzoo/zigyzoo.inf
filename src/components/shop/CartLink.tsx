@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { cartLineCount, useCartStore } from "@/store/cart";
 
 /** Carrito estilo Lucide: cesta + ruedas bien visibles. */
-function CartIcon({ className }: { className?: string }) {
+export function CartIcon({ className }: { className?: string }) {
   return (
     <svg
       className={className}

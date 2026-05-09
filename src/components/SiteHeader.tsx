@@ -11,8 +11,8 @@ const nav = [
 
 export function SiteHeader() {
   return (
-    <header className="sticky top-0 z-50 border-b border-black/5 bg-[var(--color-fondo-pagina)]/90 backdrop-blur-md">
-      <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:gap-4 sm:px-6">
+    <header className="sticky top-0 z-50 border-b border-black/5 bg-[var(--color-fondo-pagina)]/90 pt-[env(safe-area-inset-top,0px)] backdrop-blur-md">
+      <div className="mx-auto flex max-w-6xl min-w-0 items-center gap-2 py-3 pl-[max(1rem,env(safe-area-inset-left,0px))] pr-[max(1rem,env(safe-area-inset-right,0px))] sm:gap-4 sm:pl-[max(1.5rem,env(safe-area-inset-left,0px))] sm:pr-[max(1.5rem,env(safe-area-inset-right,0px))]">
         <Link
           href="/"
           className="flex min-w-0 shrink-0 items-center gap-2 transition-opacity hover:opacity-90"
@@ -28,10 +28,9 @@ export function SiteHeader() {
           />
         </Link>
         <nav
-          className="flex max-w-[58%] flex-1 flex-nowrap items-center justify-end gap-0.5 overflow-x-auto pb-0.5 sm:max-w-none sm:justify-end sm:gap-1 md:gap-2"
+          className="flex min-w-0 flex-1 flex-nowrap items-center justify-end gap-0.5 overflow-x-auto pb-0.5 [-webkit-overflow-scrolling:touch] sm:gap-1 md:gap-2"
           aria-label="Principal"
         >
-          <CartLink />
           {nav.map((item) => (
             <Link
               key={item.href}
@@ -42,6 +41,9 @@ export function SiteHeader() {
             </Link>
           ))}
         </nav>
+        <div className="shrink-0">
+          <CartLink />
+        </div>
       </div>
     </header>
   );

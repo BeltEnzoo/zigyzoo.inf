@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Big_Shoulders, Quicksand } from "next/font/google";
 import { WhatsAppFloat } from "@/components/WhatsAppFloat";
 import "./globals.css";
@@ -21,6 +21,12 @@ export const metadata: Metadata = {
     "Ropa infantil con calidez y estilo. Descubrí nuestra tienda y vestí a los más chicos con Zigyzoo.",
 };
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -31,7 +37,7 @@ export default function RootLayout({
       lang="es"
       className={`${quicksand.variable} ${bigShoulders.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col pb-24 font-sans sm:pb-20">
+      <body className="flex min-h-full min-w-0 flex-col pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] font-sans antialiased sm:pb-[calc(5rem+env(safe-area-inset-bottom,0px))]">
         {children}
         <WhatsAppFloat />
       </body>

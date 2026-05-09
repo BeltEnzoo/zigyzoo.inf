@@ -1,4 +1,5 @@
 import { parseProductImageUrls } from "@/lib/catalog/image-urls";
+import { parseSheetIsActive } from "@/lib/catalog/sheet-boolean";
 import { splitAlignedToSizes } from "@/lib/catalog/variant-extras";
 import type { Category, ProductListItem } from "@/types/shop";
 
@@ -100,18 +101,8 @@ export function pick(r: RowMap, ...keys: string[]): string {
   return "";
 }
 
-export async function fetchSheetRows(): Promise<RowMap[]> {
-  const sheetId = process.env.GOOGLE_SHEET_ID?.trim() || DEFAULT_SHEET_ID;
-  const gid = process.env.GOOGLE_SHEET_GID?.trim() || DEFAULT_GID;
-  const url = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=${gid}`;
-  const res = await fetch(url, { cache: "no-store" });
-  if (!res.ok) {
-    throw new Error("No se pudo leer Google Sheet. Revisá permisos de compartir.");
-  }
-  const csv = await res.text();
-  const matrix = parseCsv(csv);
+function matrixToRowMaps(matrix: string[][]): RowMap[] {
   if (!matrix.length) return [];
-
   const headers = matrix[0].map(normalizeHeader);
   const rows: RowMap[] = [];
   for (let i = 1; i < matrix.length; i++) {
@@ -122,6 +113,45 @@ export async function fetchSheetRows(): Promise<RowMap[]> {
       row[headers[c]] = (line[c] ?? "").trim();
     }
     rows.push(row);
+  }
+  return rows;
+}
+
+/** Una lectura del CSV (URL única para evitar caché/CDN). */
+async function fetchSheetRowsOnce(): Promise<RowMap[]> {
+  const sheetId = process.env.GOOGLE_SHEET_ID?.trim() || DEFAULT_SHEET_ID;
+  const gid = process.env.GOOGLE_SHEET_GID?.trim() || DEFAULT_GID;
+  const url = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=${gid}&t=${Date.now()}`;
+  const res = await fetch(url, { cache: "no-store" });
+  if (!res.ok) {
+    throw new Error("No se pudo leer Google Sheet. Revisá permisos de compartir.");
+  }
+  const csv = await res.text();
+  return matrixToRowMaps(parseCsv(csv));
+}
+
+/**
+ * Tras editar la hoja, el export CSV público a veces devuelve el snapshot anterior durante ~0,5–2 s.
+ * Varios intentos con pausa mejoran que un solo clic de “Actualizar” vea el estado nuevo.
+ */
+export async function fetchSheetRows(): Promise<RowMap[]> {
+  const attemptsParsed = Number.parseInt(process.env.SHEET_EXPORT_FETCH_ATTEMPTS?.trim() ?? "", 10);
+  const attempts = Math.min(
+    6,
+    Math.max(1, Number.isFinite(attemptsParsed) ? attemptsParsed : 3),
+  );
+  const pauseParsed = Number.parseInt(process.env.SHEET_EXPORT_SETTLE_MS?.trim() ?? "", 10);
+  const pauseMs = Math.min(
+    3000,
+    Math.max(0, Number.isFinite(pauseParsed) ? pauseParsed : 400),
+  );
+
+  let rows: RowMap[] = [];
+  for (let i = 0; i < attempts; i++) {
+    rows = await fetchSheetRowsOnce();
+    if (i < attempts - 1 && pauseMs > 0) {
+      await new Promise((r) => setTimeout(r, pauseMs));
+    }
   }
   return rows;
 }
@@ -181,7 +211,7 @@ export function parseRowsToProductListItems(rows: RowMap[]): ProductListItem[] {
     const price = Number(priceRaw.replace(",", "."));
     if (!Number.isFinite(price) || price < 0) continue;
 
-    const isActive = !["0", "false", "no", "n"].includes(isActiveRaw.toLowerCase());
+    const isActive = parseSheetIsActive(isActiveRaw);
     const categorySlugCandidates = (categorySlugsRaw || categorySlugRaw)
       .split(/[;|,]/)
       .map((s) => slugify(s))

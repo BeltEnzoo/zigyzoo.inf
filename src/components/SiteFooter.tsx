@@ -19,7 +19,7 @@ const legalLinks = [
 export function SiteFooter() {
   return (
     <footer className="mt-auto border-t border-black/5 bg-surface-mint/40">
-      <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-8 sm:px-6">
+      <div className="mx-auto flex max-w-6xl flex-col gap-6 pb-[max(2rem,calc(2rem+env(safe-area-inset-bottom,0px)))] pt-8 pl-[max(1rem,env(safe-area-inset-left,0px))] pr-[max(1rem,env(safe-area-inset-right,0px))] sm:pl-[max(1.5rem,env(safe-area-inset-left,0px))] sm:pr-[max(1.5rem,env(safe-area-inset-right,0px))]">
         <nav
           className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm font-semibold text-brand"
           aria-label="Pie de página"
@@ -40,7 +40,7 @@ export function SiteFooter() {
             </Link>
           ))}
         </nav>
-        <p className="text-center text-xs text-foreground/65 sm:text-left">
+        <p className="break-words text-center text-xs text-foreground/65 sm:text-left">
           {getAddressLines().join(" · ")}
         </p>
         <div className="flex flex-col gap-2 text-center sm:flex-row sm:items-center sm:justify-between sm:text-left">

@@ -11,6 +11,7 @@ import {
   CATEGORY_COLOR_BY_SLUG,
 } from "@/lib/catalog/google-sheet";
 import { parseProductImageUrls } from "@/lib/catalog/image-urls";
+import { parseSheetIsActive } from "@/lib/catalog/sheet-boolean";
 import { splitAlignedToSizes } from "@/lib/catalog/variant-extras";
 import { getAdminSession } from "@/lib/auth/session";
 import { getSql } from "@/lib/db/neon";
@@ -106,7 +107,7 @@ export async function syncProductsFromGoogleSheet() {
       continue;
     }
 
-    const isActive = !["0", "false", "no", "n"].includes(isActiveRaw.toLowerCase());
+    const isActive = parseSheetIsActive(isActiveRaw);
     const categorySlugCandidates = (categorySlugsRaw || categorySlugRaw)
       .split(/[;|,]/)
       .map((s) => slugify(s))

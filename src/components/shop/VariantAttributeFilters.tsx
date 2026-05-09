@@ -50,7 +50,7 @@ export function VariantAttributeFilters({ colorOptions, tamanoOptions }: Props) 
               const v = e.target.value;
               pushWith({ color: v || null });
             }}
-            className="w-full rounded-2xl border border-black/10 bg-white px-4 py-2.5 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+            className="min-h-12 w-full rounded-2xl border border-black/10 bg-white px-4 py-2.5 text-[16px] outline-none focus:border-brand focus:ring-2 focus:ring-brand/20 sm:text-sm"
           >
             <option value="">Todos los colores</option>
             {colorOptions.map((c) => (
@@ -73,7 +73,7 @@ export function VariantAttributeFilters({ colorOptions, tamanoOptions }: Props) 
               const v = e.target.value;
               pushWith({ tamano: v || null });
             }}
-            className="w-full rounded-2xl border border-black/10 bg-white px-4 py-2.5 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+            className="min-h-12 w-full rounded-2xl border border-black/10 bg-white px-4 py-2.5 text-[16px] outline-none focus:border-brand focus:ring-2 focus:ring-brand/20 sm:text-sm"
           >
             <option value="">Todos los tamaños</option>
             {tamanoOptions.map((t) => (

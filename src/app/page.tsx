@@ -16,7 +16,7 @@ export default function Home() {
   return (
     <>
       <SiteHeader />
-      <main className="flex flex-1 flex-col">
+      <main className="flex min-w-0 flex-1 flex-col">
         <section className="relative flex min-h-[70vh] items-center overflow-hidden px-4 pb-16 pt-10 sm:min-h-[78vh] sm:px-6 sm:pb-24 sm:pt-14">
           <div
             className="pointer-events-none absolute inset-0 -z-10 bg-cover bg-center brightness-125 saturate-110"
@@ -27,7 +27,7 @@ export default function Home() {
             className="pointer-events-none absolute inset-0 -z-10 bg-black/14"
             aria-hidden
           />
-          <div className="mx-auto max-w-2xl text-center">
+          <div className="mx-auto max-w-2xl min-w-0 px-1 text-center sm:px-0">
             <div className="mb-[-6px] flex translate-y-15 justify-center sm:mb-[-8px] sm:translate-y-10">
               <Image
                 src={castoresSvg}

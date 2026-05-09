@@ -42,7 +42,7 @@ export function EnviosPagosSection() {
         </p>
 
         <div className="mt-12 grid gap-8 lg:grid-cols-2">
-          <div className="rounded-3xl border border-black/5 bg-surface-ice/70 p-8 shadow-sm">
+          <div className="rounded-3xl border border-black/5 bg-surface-ice/70 p-5 shadow-sm sm:p-8">
             <h3 className="font-display text-xl font-bold text-brand">Envíos y retiros</h3>
             <ul className="mt-4 space-y-3 text-foreground/85">
               <li>
@@ -80,7 +80,7 @@ export function EnviosPagosSection() {
             </ul>
           </div>
 
-          <div className="rounded-3xl border border-black/5 bg-surface-sand/80 p-8 shadow-sm">
+          <div className="rounded-3xl border border-black/5 bg-surface-sand/80 p-5 shadow-sm sm:p-8">
             <h3 className="font-display text-xl font-bold text-brand">Medios de pago</h3>
             <p className="mt-4 text-foreground/85">
               Los cobros online se procesan principalmente con{" "}

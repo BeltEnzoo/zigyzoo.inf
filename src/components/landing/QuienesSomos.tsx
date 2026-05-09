@@ -12,7 +12,7 @@ export function QuienesSomos() {
           Nuestra esencia y la familia detrás de Zigyzoo
         </p>
 
-        <div className="mt-12 space-y-8 text-lg leading-relaxed text-foreground/90">
+        <div className="mt-12 space-y-8 text-base leading-relaxed text-foreground/90 sm:text-lg">
           <div className="space-y-4">
             <h3 className="font-display text-xl font-bold text-brand">¿Qué es Zigyzoo?</h3>
             <p>

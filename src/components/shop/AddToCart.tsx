@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { formatVariantOptionLabel } from "@/lib/shop/variant-label";
 import { useCartStore } from "@/store/cart";
@@ -35,6 +36,7 @@ export function AddToCart({
   variantId: controlledVariantId,
   onVariantChange,
 }: Props) {
+  const router = useRouter();
   const addOrUpdateLine = useCartStore((s) => s.addOrUpdateLine);
   const isControlled = typeof onVariantChange === "function";
   const [internalVariantId, setInternalVariantId] = useState<string>("");
@@ -78,12 +80,8 @@ export function AddToCart({
     if (selected) setQty((q) => Math.min(Math.max(1, q), maxQty));
   }, [selected, maxQty]);
 
-  function handleAdd() {
-    setFeedback(null);
-    if (!selected || maxQty <= 0) {
-      setFeedback("Elegí una variante con stock.");
-      return;
-    }
+  function addSelectionToCart(): boolean {
+    if (!selected || maxQty <= 0) return false;
     const q = Math.min(Math.max(1, qty), maxQty);
     addOrUpdateLine({
       productId: product.id,
@@ -97,7 +95,25 @@ export function AddToCart({
       quantity: q,
       maxStock: selected.stock,
     });
+    return true;
+  }
+
+  function handleAdd() {
+    setFeedback(null);
+    if (!addSelectionToCart()) {
+      setFeedback("Elegí una variante con stock.");
+      return;
+    }
     setFeedback("Agregado al carrito.");
+  }
+
+  function handleBuyNow() {
+    setFeedback(null);
+    if (!addSelectionToCart()) {
+      setFeedback("Elegí una variante con stock.");
+      return;
+    }
+    router.push("/carrito");
   }
 
   if (product.variants.length === 0) {
@@ -128,7 +144,7 @@ export function AddToCart({
         <select
           id="variant"
           aria-describedby={showVariantHint ? "variant-hint" : undefined}
-          className="w-full max-w-xs rounded-2xl border border-black/10 bg-white px-4 py-3 outline-none focus:border-brand focus:ring-2 focus:ring-brand/25"
+          className="w-full max-w-full rounded-2xl border border-black/10 bg-white px-4 py-3 text-[16px] outline-none focus:border-brand focus:ring-2 focus:ring-brand/25 sm:max-w-xs sm:text-sm"
           value={variantId}
           onChange={(e) => {
             setVariantId(e.target.value);
@@ -151,22 +167,33 @@ export function AddToCart({
         <input
           id="qty"
           type="number"
+          inputMode="numeric"
           min={1}
           max={maxQty || 1}
           value={qty}
           onChange={(e) => setQty(Math.max(1, Number(e.target.value) || 1))}
           disabled={!selected}
-          className="w-24 rounded-2xl border border-black/10 bg-white px-4 py-3 outline-none focus:border-brand focus:ring-2 focus:ring-brand/25 disabled:opacity-50"
+          className="min-h-12 w-full max-w-[8rem] rounded-2xl border border-black/10 bg-white px-4 py-3 text-[16px] outline-none focus:border-brand focus:ring-2 focus:ring-brand/25 disabled:opacity-50 sm:w-24 sm:text-sm"
         />
       </div>
-      <button
-        type="button"
-        onClick={handleAdd}
-        disabled={!selected}
-        className="inline-flex min-h-12 w-full max-w-xs items-center justify-center rounded-full bg-brand px-8 text-base font-bold text-white shadow-md transition hover:brightness-110 disabled:opacity-50 sm:w-auto"
-      >
-        Agregar al carrito
-      </button>
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+        <button
+          type="button"
+          onClick={handleAdd}
+          disabled={!selected || maxQty <= 0}
+          className="inline-flex min-h-12 w-full max-w-full items-center justify-center rounded-full bg-brand px-6 text-base font-bold text-white shadow-md transition hover:brightness-110 disabled:opacity-50 sm:w-auto sm:max-w-xs"
+        >
+          Agregar al carrito
+        </button>
+        <button
+          type="button"
+          onClick={handleBuyNow}
+          disabled={!selected || maxQty <= 0}
+          className="inline-flex min-h-12 w-full max-w-full items-center justify-center rounded-full border-2 border-brand bg-transparent px-6 text-base font-bold text-brand transition hover:bg-surface-ice disabled:opacity-50 sm:w-auto sm:max-w-xs"
+        >
+          Comprar ahora
+        </button>
+      </div>
       {feedback && (
         <p className="text-sm font-medium text-accent-sage" role="status">
           {feedback}

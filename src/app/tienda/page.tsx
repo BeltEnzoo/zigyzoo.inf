@@ -40,7 +40,7 @@ export default async function TiendaPage({ searchParams }: Props) {
   return (
     <>
       <SiteHeader />
-      <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-4 py-10 sm:px-6 sm:py-12">
+      <main className="mx-auto flex w-full min-w-0 max-w-6xl flex-1 flex-col px-4 py-10 sm:px-6 sm:py-12">
         <div className="mb-8">
           <Link href="/" className="text-sm font-semibold text-brand hover:underline">
             ← Volver al inicio
@@ -54,37 +54,38 @@ export default async function TiendaPage({ searchParams }: Props) {
         </div>
 
         <DemoBanner />
-        <form method="get" className="mt-6 mb-8">
+        <form method="get" className="mt-6 mb-8 space-y-3">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
             <input
-              type="text"
+              type="search"
               name="q"
+              enterKeyHint="search"
               defaultValue={query}
               placeholder="Buscar por nombre, descripción o slug"
-              className="w-full rounded-2xl border border-black/10 bg-white px-4 py-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+              className="min-h-12 w-full min-w-0 rounded-2xl border border-black/10 bg-white px-4 py-3 text-[16px] outline-none focus:border-brand focus:ring-2 focus:ring-brand/20 sm:text-sm"
             />
             {categoria && <input type="hidden" name="categoria" value={categoria} />}
             {colorProducto && <input type="hidden" name="color" value={colorProducto} />}
             {tamanoProducto && <input type="hidden" name="tamano" value={tamanoProducto} />}
             <button
               type="submit"
-              className="inline-flex min-h-11 items-center justify-center rounded-full bg-brand px-5 text-sm font-bold text-white hover:brightness-110"
+              className="inline-flex min-h-12 w-full shrink-0 items-center justify-center rounded-full bg-brand px-5 text-sm font-bold text-white hover:brightness-110 sm:w-auto"
             >
               Buscar
             </button>
-            {query && (
-              <Link
-                href={buildTiendaHref({
-                  categoria,
-                  color: colorProducto,
-                  tamano: tamanoProducto,
-                })}
-                className="text-sm font-semibold text-brand underline"
-              >
-                Limpiar búsqueda
-              </Link>
-            )}
           </div>
+          {query && (
+            <Link
+              href={buildTiendaHref({
+                categoria,
+                color: colorProducto,
+                tamano: tamanoProducto,
+              })}
+              className="inline-block text-center text-sm font-semibold text-brand underline sm:text-left"
+            >
+              Limpiar búsqueda
+            </Link>
+          )}
         </form>
 
         {categories.length > 0 && (
