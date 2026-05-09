@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Big_Shoulders, Quicksand } from "next/font/google";
+import { CartFloat } from "@/components/shop/CartFloat";
 import { WhatsAppFloat } from "@/components/WhatsAppFloat";
 import "./globals.css";
 
@@ -39,6 +40,7 @@ export default function RootLayout({
     >
       <body className="flex min-h-full min-w-0 flex-col pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] font-sans antialiased sm:pb-[calc(5rem+env(safe-area-inset-bottom,0px))]">
         {children}
+        <CartFloat />
         <WhatsAppFloat />
       </body>
     </html>

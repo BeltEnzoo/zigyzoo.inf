@@ -41,7 +41,7 @@ export function SiteHeader() {
             </Link>
           ))}
         </nav>
-        <div className="shrink-0">
+        <div className="hidden shrink-0 sm:block">
           <CartLink />
         </div>
       </div>
