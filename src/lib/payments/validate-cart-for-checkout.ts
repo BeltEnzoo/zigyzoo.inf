@@ -1,0 +1,110 @@
+import { randomUUID } from "crypto";
+import { getProductBySlug } from "@/data/shop";
+import {
+  normalizeArgentinePostalCode,
+  quoteShippingByPostalCode,
+} from "@/lib/shipping/quote";
+import type { CartLine } from "@/store/cart";
+
+export type MercadoPagoPreferenceItem = {
+  id: string;
+  title: string;
+  quantity: number;
+  unit_price: number;
+  currency_id: string;
+};
+
+export type ValidatedCheckout = {
+  items: MercadoPagoPreferenceItem[];
+  external_reference: string;
+  /** CP normalizado (misma lógica que cotización de envío). */
+  normalizedPostalCode: string;
+};
+
+export async function validateCartForCheckout(
+  lines: CartLine[],
+  postalCodeRaw: string,
+): Promise<{ ok: true; data: ValidatedCheckout } | { ok: false; error: string }> {
+  if (!lines.length) {
+    return { ok: false, error: "El carrito está vacío." };
+  }
+
+  const shippingQuote = quoteShippingByPostalCode(postalCodeRaw);
+  if (!shippingQuote) {
+    return {
+      ok: false,
+      error: "Ingresá un código postal válido para calcular el envío (mínimo 4 caracteres).",
+    };
+  }
+
+  const normalizedPostalCode = normalizeArgentinePostalCode(postalCodeRaw);
+
+  const currencies = new Set(lines.map((l) => l.currency));
+  if (currencies.size !== 1) {
+    return { ok: false, error: "El carrito debe tener una sola moneda." };
+  }
+  const currency = [...currencies][0];
+  if (currency !== "ARS") {
+    return { ok: false, error: "Por ahora solo aceptamos pesos argentinos (ARS)." };
+  }
+
+  const items: MercadoPagoPreferenceItem[] = [];
+
+  for (const line of lines) {
+    const product = await getProductBySlug(line.slug);
+    if (!product?.is_active) {
+      return {
+        ok: false,
+        error: `El producto "${line.name}" ya no está disponible. Volvé a la tienda y actualizá el carrito.`,
+      };
+    }
+
+    const variant = product.product_variants.find((v) => v.id === line.variantId);
+    if (!variant) {
+      return {
+        ok: false,
+        error: `La opción elegida para "${product.name}" ya no existe. Actualizá el carrito.`,
+      };
+    }
+
+    if (variant.stock < line.quantity) {
+      return {
+        ok: false,
+        error: `Stock insuficiente para "${product.name}" (${line.sizeLabel}). Revisá cantidades en la tienda.`,
+      };
+    }
+
+    const serverPrice = product.price;
+    if (Math.abs(serverPrice - line.price) > 0.02) {
+      return {
+        ok: false,
+        error: `El precio de "${product.name}" cambió. Volvé a la tienda y cargá el carrito de nuevo.`,
+      };
+    }
+
+    const title = `${product.name} — ${line.sizeLabel}`.slice(0, 250);
+    items.push({
+      id: line.lineId.slice(0, 256),
+      title,
+      quantity: line.quantity,
+      unit_price: Number(serverPrice.toFixed(2)),
+      currency_id: "ARS",
+    });
+  }
+
+  if (shippingQuote.costARS > 0) {
+    items.push({
+      id: "shipping-zigyzoo",
+      title: `Envío — ${shippingQuote.label}`.slice(0, 250),
+      quantity: 1,
+      unit_price: Number(shippingQuote.costARS.toFixed(2)),
+      currency_id: "ARS",
+    });
+  }
+
+  const external_reference = `zigyzoo-${randomUUID()}`;
+  return {
+    ok: true,
+    data: { items, external_reference, normalizedPostalCode },
+  };
+}

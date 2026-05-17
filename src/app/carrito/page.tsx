@@ -9,6 +9,8 @@ export const metadata = {
 };
 
 export default function CarritoPage() {
+  const mercadoPagoConfigured = Boolean(process.env.MERCADOPAGO_ACCESS_TOKEN?.trim());
+
   return (
     <>
       <SiteHeader />
@@ -20,10 +22,10 @@ export default function CarritoPage() {
           Carrito
         </h1>
         <p className="mt-2 text-foreground/75">
-          Ajustá cantidades o quitá ítems. El checkout llegará en una próxima etapa.
+          Revisá cantidades, completá tus datos, calculá el envío y pagá con Mercado Pago en cuatro pasos.
         </p>
         <div className="mt-10">
-          <CarritoView />
+          <CarritoView mercadoPagoConfigured={mercadoPagoConfigured} />
         </div>
       </main>
       <SiteFooter />

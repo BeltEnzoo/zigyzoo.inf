@@ -1,5 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { normalizeArgentinePostalCode } from "@/lib/shipping/quote";
+import type { CheckoutBuyerPayload } from "@/types/checkout-buyer";
 
 export type CartLine = {
   lineId: string;
@@ -15,8 +17,31 @@ export type CartLine = {
   maxStock: number;
 };
 
+/** Cotización de envío por código postal (persistida con el carrito). */
+export type ShippingQuoteSnapshot = {
+  /** CP normalizado guardado al cotizar (servidor lo recotiza al pagar). */
+  normalizedPostalCode: string;
+  costARS: number;
+  label: string;
+};
+
+function emptyBuyer(): CheckoutBuyerPayload {
+  return {
+    firstName: "",
+    lastName: "",
+    dni: "",
+    phone: "",
+    email: "",
+  };
+}
+
 type CartState = {
   lines: CartLine[];
+  /** Datos del comprador para Mercado Pago y el pedido. */
+  buyer: CheckoutBuyerPayload;
+  /** Texto del input de CP (solo UX). */
+  shippingPostalInput: string;
+  shipping: ShippingQuoteSnapshot | null;
   addOrUpdateLine: (input: {
     productId: string;
     slug: string;
@@ -31,8 +56,23 @@ type CartState = {
   }) => void;
   setQuantity: (lineId: string, quantity: number) => void;
   removeLine: (lineId: string) => void;
+  setShippingPostalInput: (value: string) => void;
+  setShippingQuote: (snapshot: ShippingQuoteSnapshot) => void;
+  setBuyer: (patch: Partial<CheckoutBuyerPayload>) => void;
+  clearShipping: () => void;
   clear: () => void;
 };
+
+function emptyShipping() {
+  return {
+    shippingPostalInput: "",
+    shipping: null as ShippingQuoteSnapshot | null,
+  };
+}
+
+function emptyCartExtras() {
+  return { ...emptyShipping(), buyer: emptyBuyer() };
+}
 
 function lineId(productId: string, variantId: string) {
   return `${productId}::${variantId}`;
@@ -40,8 +80,10 @@ function lineId(productId: string, variantId: string) {
 
 export const useCartStore = create<CartState>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       lines: [],
+      buyer: emptyBuyer(),
+      ...emptyShipping(),
 
       addOrUpdateLine: (input) => {
         const id = lineId(input.productId, input.variantId);
@@ -86,26 +128,71 @@ export const useCartStore = create<CartState>()(
       },
 
       setQuantity: (lineId, quantity) => {
-        set((state) => ({
-          lines: state.lines
+        set((state) => {
+          const lines = state.lines
             .map((l) => {
               if (l.lineId !== lineId) return l;
               const q = Math.max(0, Math.min(quantity, l.maxStock));
               return { ...l, quantity: q };
             })
-            .filter((l) => l.quantity > 0),
-        }));
+            .filter((l) => l.quantity > 0);
+          return {
+            lines,
+            ...(lines.length === 0 ? emptyCartExtras() : {}),
+          };
+        });
       },
 
       removeLine: (lineId) => {
-        set((state) => ({
-          lines: state.lines.filter((l) => l.lineId !== lineId),
-        }));
+        set((state) => {
+          const lines = state.lines.filter((l) => l.lineId !== lineId);
+          return {
+            lines,
+            ...(lines.length === 0 ? emptyCartExtras() : {}),
+          };
+        });
       },
 
-      clear: () => set({ lines: [] }),
+      setShippingPostalInput: (value) =>
+        set((state) => {
+          const norm = normalizeArgentinePostalCode(value);
+          const shippingStale =
+            state.shipping !== null && norm !== state.shipping.normalizedPostalCode;
+          return {
+            shippingPostalInput: value,
+            ...(shippingStale ? { shipping: null } : {}),
+          };
+        }),
+
+      setShippingQuote: (snapshot) =>
+        set({
+          shipping: snapshot,
+        }),
+
+      setBuyer: (patch) =>
+        set((state) => ({
+          buyer: { ...state.buyer, ...patch },
+        })),
+
+      clearShipping: () => set({ shipping: null }),
+
+      clear: () => set({ lines: [], ...emptyCartExtras() }),
     }),
-    { name: "zigyzoo-cart" },
+    {
+      name: "zigyzoo-cart",
+      merge: (persistedState, currentState) => {
+        const p = persistedState as Partial<CartState> | undefined;
+        if (!p) return currentState;
+        return {
+          ...currentState,
+          ...p,
+          buyer:
+            p.buyer && typeof p.buyer === "object"
+              ? { ...emptyBuyer(), ...p.buyer }
+              : currentState.buyer,
+        };
+      },
+    },
   ),
 );
 
@@ -115,4 +202,8 @@ export function cartLineCount(lines: CartLine[]) {
 
 export function cartSubtotal(lines: CartLine[]) {
   return lines.reduce((sum, l) => sum + l.price * l.quantity, 0);
+}
+
+export function cartGrandTotal(lines: CartLine[], shippingCostARS: number | null) {
+  return cartSubtotal(lines) + (shippingCostARS ?? 0);
 }

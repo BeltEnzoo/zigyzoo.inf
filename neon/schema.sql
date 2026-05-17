@@ -83,6 +83,21 @@ create trigger trg_products_updated
 
 -- Sin RLS: la app Next.js en Vercel accede con DATABASE_URL (servidor de confianza).
 
+-- Intento de compra (preferencia MP): datos del comprador + vínculo por external_reference
+create table if not exists public.checkout_sessions (
+  id uuid primary key default gen_random_uuid(),
+  external_reference text not null unique,
+  buyer_first_name text not null,
+  buyer_last_name text not null,
+  buyer_dni text not null,
+  buyer_phone text not null,
+  buyer_email text not null,
+  shipping_postal_code text,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists idx_checkout_sessions_created on public.checkout_sessions (created_at desc);
+
 insert into public.categories (name, slug, sort_order)
 values
   ('Remeras', 'remeras', 1),
