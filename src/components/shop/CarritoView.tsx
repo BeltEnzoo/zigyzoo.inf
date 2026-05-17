@@ -4,10 +4,14 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { lookupPostalLocality } from "@/app/actions/lookup-postal-locality";
 import { MercadoPagoCheckoutButton } from "@/components/shop/MercadoPagoCheckoutButton";
+import { getWhatsAppUrl } from "@/config/site";
 import { validateBuyerPayload } from "@/lib/checkout/validate-buyer";
 import { formatMoney } from "@/lib/format";
+import { buildCoordinarWhatsAppMessage } from "@/lib/shipping/build-coordinar-whatsapp-message";
 import { normalizeArgentinePostalCode, quoteShippingByPostalCode } from "@/lib/shipping/quote";
 import { cartGrandTotal, cartSubtotal, useCartStore } from "@/store/cart";
+import type { ShippingMethod } from "@/types/shipping";
+import { SHIPPING_COORDINAR_LABEL } from "@/types/shipping";
 
 const STEPS = [
   { n: 1, title: "Carrito", short: "Carrito" },
@@ -25,9 +29,11 @@ export function CarritoView({ mercadoPagoConfigured = false }: Props) {
   const lines = useCartStore((s) => s.lines);
   const shippingPostalInput = useCartStore((s) => s.shippingPostalInput ?? "");
   const shipping = useCartStore((s) => s.shipping);
+  const shippingMethod = useCartStore((s) => s.shippingMethod ?? "correo");
   const buyer = useCartStore((s) => s.buyer);
   const setBuyer = useCartStore((s) => s.setBuyer);
   const setShippingPostalInput = useCartStore((s) => s.setShippingPostalInput);
+  const setShippingMethod = useCartStore((s) => s.setShippingMethod);
   const setShippingQuote = useCartStore((s) => s.setShippingQuote);
   const setQuantity = useCartStore((s) => s.setQuantity);
   const removeLine = useCartStore((s) => s.removeLine);
@@ -67,6 +73,23 @@ export function CarritoView({ mercadoPagoConfigured = false }: Props) {
   const buyerValidation = useMemo(() => validateBuyerPayload(buyer), [buyer]);
   const buyerReady = buyerValidation.ok;
 
+  const coordinarWhatsAppHref = useMemo(() => {
+    if (shipping?.method !== "coordinar") return null;
+    return getWhatsAppUrl(
+      buildCoordinarWhatsAppMessage({
+        lines,
+        buyer,
+        postalCode: shipping.normalizedPostalCode,
+        subtotal,
+        currency,
+      }),
+    );
+  }, [shipping, lines, buyer, subtotal, currency]);
+
+  function selectShippingMethod(method: ShippingMethod) {
+    if (method !== shippingMethod) setShippingMethod(method);
+  }
+
   function handleQuoteShipping() {
     setQuoteError(null);
     const q = quoteShippingByPostalCode(shippingPostalInput);
@@ -77,9 +100,27 @@ export function CarritoView({ mercadoPagoConfigured = false }: Props) {
       return;
     }
     setShippingQuote({
+      method: "correo",
       normalizedPostalCode: normalizeArgentinePostalCode(shippingPostalInput),
       costARS: q.costARS,
       label: q.label,
+    });
+  }
+
+  function handleConfirmCoordinar() {
+    setQuoteError(null);
+    const norm = normalizeArgentinePostalCode(shippingPostalInput);
+    if (norm.length < 4) {
+      setQuoteError(
+        "Ingresá tu código postal (mínimo 4 caracteres) para que podamos cotizar el envío por WhatsApp.",
+      );
+      return;
+    }
+    setShippingQuote({
+      method: "coordinar",
+      normalizedPostalCode: norm,
+      costARS: 0,
+      label: SHIPPING_COORDINAR_LABEL,
     });
   }
 
@@ -378,9 +419,56 @@ export function CarritoView({ mercadoPagoConfigured = false }: Props) {
         <section className="rounded-2xl border border-black/5 bg-white px-4 py-5 sm:px-6">
           <h2 className="font-display text-lg font-bold text-brand">Envío</h2>
           <p className="mt-2 text-sm text-foreground/70">
-            Cotización por código postal (Correo Argentino). Los montos son los configurados en la tienda; cuando
-            cambien las tarifas hay que actualizarlos acá.
+            Elegí cómo querés recibir el pedido. Con Correo Argentino ves el precio al instante; si preferís, lo
+            coordinamos por WhatsApp (el envío se abona aparte).
           </p>
+
+          <fieldset className="mt-4 space-y-2">
+            <legend className="sr-only">Método de envío</legend>
+            <label
+              className={`flex cursor-pointer gap-3 rounded-2xl border px-4 py-3 transition ${
+                shippingMethod === "correo"
+                  ? "border-brand bg-brand/5 ring-2 ring-brand/20"
+                  : "border-black/10 bg-surface-ice/30 hover:border-brand/30"
+              }`}
+            >
+              <input
+                type="radio"
+                name="shipping-method"
+                className="mt-1 accent-brand"
+                checked={shippingMethod === "correo"}
+                onChange={() => selectShippingMethod("correo")}
+              />
+              <span>
+                <span className="font-semibold text-foreground">Correo Argentino</span>
+                <span className="mt-0.5 block text-sm text-foreground/65">
+                  Precio según tu código postal (zonas del país).
+                </span>
+              </span>
+            </label>
+            <label
+              className={`flex cursor-pointer gap-3 rounded-2xl border px-4 py-3 transition ${
+                shippingMethod === "coordinar"
+                  ? "border-brand bg-brand/5 ring-2 ring-brand/20"
+                  : "border-black/10 bg-surface-ice/30 hover:border-brand/30"
+              }`}
+            >
+              <input
+                type="radio"
+                name="shipping-method"
+                className="mt-1 accent-brand"
+                checked={shippingMethod === "coordinar"}
+                onChange={() => selectShippingMethod("coordinar")}
+              />
+              <span>
+                <span className="font-semibold text-foreground">Coordinar con la tienda</span>
+                <span className="mt-0.5 block text-sm text-foreground/65">
+                  Pagás solo los productos ahora; el envío lo definimos por WhatsApp.
+                </span>
+              </span>
+            </label>
+          </fieldset>
+
           <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end">
             <div className="min-w-0 flex-1">
               <label htmlFor="cart-cp" className="mb-1 block text-xs font-semibold text-foreground/70">
@@ -397,13 +485,23 @@ export function CarritoView({ mercadoPagoConfigured = false }: Props) {
                 className="min-h-12 w-full rounded-2xl border border-black/10 bg-surface-ice/40 px-4 py-3 text-[16px] outline-none focus:border-brand focus:ring-2 focus:ring-brand/20 sm:text-sm"
               />
             </div>
-            <button
-              type="button"
-              onClick={handleQuoteShipping}
-              className="inline-flex min-h-12 shrink-0 items-center justify-center rounded-full bg-brand px-6 text-sm font-bold text-white shadow-sm hover:brightness-110"
-            >
-              Calcular envío
-            </button>
+            {shippingMethod === "correo" ? (
+              <button
+                type="button"
+                onClick={handleQuoteShipping}
+                className="inline-flex min-h-12 shrink-0 items-center justify-center rounded-full bg-brand px-6 text-sm font-bold text-white shadow-sm hover:brightness-110"
+              >
+                Calcular envío
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={handleConfirmCoordinar}
+                className="inline-flex min-h-12 shrink-0 items-center justify-center rounded-full bg-brand px-6 text-sm font-bold text-white shadow-sm hover:brightness-110"
+              >
+                Confirmar
+              </button>
+            )}
           </div>
 
           {(localityLoading || shipping) && (
@@ -434,11 +532,32 @@ export function CarritoView({ mercadoPagoConfigured = false }: Props) {
             </p>
           )}
           {shipping && (
-            <p className="mt-4 text-sm text-foreground/85">
-              <span className="font-semibold text-brand">{shipping.label}</span>
-              {" · "}
-              <span className="font-bold">{formatMoney(shipping.costARS, currency)}</span>
-            </p>
+            <div className="mt-4 space-y-3">
+              <p className="text-sm text-foreground/85">
+                <span className="font-semibold text-brand">{shipping.label}</span>
+                {shipping.method === "correo" && (
+                  <>
+                    {" · "}
+                    <span className="font-bold">{formatMoney(shipping.costARS, currency)}</span>
+                  </>
+                )}
+                {shipping.method === "coordinar" && (
+                  <span className="mt-1 block text-foreground/65">
+                    En Mercado Pago pagás solo los productos. El envío lo coordinamos por WhatsApp.
+                  </span>
+                )}
+              </p>
+              {shipping.method === "coordinar" && coordinarWhatsAppHref && (
+                <a
+                  href={coordinarWhatsAppHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex min-h-11 items-center justify-center rounded-full bg-[#25D366] px-5 text-sm font-bold text-white shadow-sm hover:brightness-110"
+                >
+                  Escribinos por WhatsApp
+                </a>
+              )}
+            </div>
           )}
 
           <div className="mt-6 flex flex-wrap gap-3 border-t border-black/10 pt-5">
@@ -480,8 +599,26 @@ export function CarritoView({ mercadoPagoConfigured = false }: Props) {
             {shipping && (
               <div className="flex justify-between gap-4 text-sm">
                 <span className="text-foreground/70">Envío ({shipping.label})</span>
-                <span className="font-semibold">{formatMoney(shipping.costARS, currency)}</span>
+                <span className="font-semibold">
+                  {shipping.method === "coordinar"
+                    ? "A coordinar"
+                    : formatMoney(shipping.costARS, currency)}
+                </span>
               </div>
+            )}
+            {shipping?.method === "coordinar" && coordinarWhatsAppHref && (
+              <p className="text-xs text-foreground/60">
+                Podés avisarnos el pedido por{" "}
+                <a
+                  href={coordinarWhatsAppHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-semibold text-brand underline"
+                >
+                  WhatsApp
+                </a>{" "}
+                antes o después de pagar.
+              </p>
             )}
             <div className="flex justify-between gap-4 pt-2">
               <span className="font-display text-lg font-bold text-brand">Total</span>
@@ -496,6 +633,7 @@ export function CarritoView({ mercadoPagoConfigured = false }: Props) {
               lines={lines}
               postalCodeRaw={shippingPostalInput}
               buyer={buyer}
+              shippingMethod={shipping?.method ?? "correo"}
               shippingReady={shipping !== null}
               buyerReady={buyerReady}
               disabled={!mercadoPagoConfigured}

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
+import { confirmCheckoutPaymentFromReturn } from "@/app/actions/confirm-checkout-payment";
 import { useCartStore } from "@/store/cart";
 
 /** Mercado Pago redirige con collection_status / status en la URL (Checkout Pro). */
@@ -12,6 +13,9 @@ export function PaymentExitosoClient() {
 
   const collectionStatus = searchParams.get("collection_status");
   const status = searchParams.get("status");
+  const externalReference = searchParams.get("external_reference");
+  const collectionId = searchParams.get("collection_id");
+  const paymentId = searchParams.get("payment_id") ?? collectionId;
 
   const approved = useMemo(() => {
     const s = collectionStatus ?? status;
@@ -21,6 +25,16 @@ export function PaymentExitosoClient() {
   useEffect(() => {
     if (approved) clear();
   }, [approved, clear]);
+
+  useEffect(() => {
+    void confirmCheckoutPaymentFromReturn({
+      externalReference,
+      paymentId,
+      collectionId,
+      status,
+      collectionStatus,
+    });
+  }, [externalReference, paymentId, collectionId, status, collectionStatus]);
 
   return (
     <div className="mx-auto max-w-lg rounded-3xl border border-black/5 bg-white px-6 py-10 text-center shadow-sm">

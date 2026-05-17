@@ -4,13 +4,15 @@ import { useState } from "react";
 import { createMercadoPagoPreference } from "@/app/actions/create-mp-preference";
 import type { CartLine } from "@/store/cart";
 import type { CheckoutBuyerPayload } from "@/types/checkout-buyer";
+import type { ShippingMethod } from "@/types/shipping";
 
 type Props = {
   lines: CartLine[];
   /** CP ingresado (el servidor recotiza al pagar). */
   postalCodeRaw: string;
   buyer: CheckoutBuyerPayload;
-  /** Hubo “Calcular envío” y hay cotización vigente. */
+  shippingMethod: ShippingMethod;
+  /** Envío confirmado (cotización Correo o coordinar). */
   shippingReady: boolean;
   /** Datos del comprador válidos (nombre, DNI, mail, etc.). */
   buyerReady: boolean;
@@ -21,6 +23,7 @@ export function MercadoPagoCheckoutButton({
   lines,
   postalCodeRaw,
   buyer,
+  shippingMethod,
   shippingReady,
   buyerReady,
   disabled,
@@ -32,7 +35,12 @@ export function MercadoPagoCheckoutButton({
     setError(null);
     setPending(true);
     try {
-      const result = await createMercadoPagoPreference(lines, postalCodeRaw, buyer);
+      const result = await createMercadoPagoPreference(
+        lines,
+        postalCodeRaw,
+        buyer,
+        shippingMethod,
+      );
       if (!result.ok) {
         setError(result.error);
         return;

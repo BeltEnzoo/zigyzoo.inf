@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { normalizeArgentinePostalCode } from "@/lib/shipping/quote";
 import type { CheckoutBuyerPayload } from "@/types/checkout-buyer";
+import type { ShippingMethod } from "@/types/shipping";
 
 export type CartLine = {
   lineId: string;
@@ -17,9 +18,10 @@ export type CartLine = {
   maxStock: number;
 };
 
-/** Cotización de envío por código postal (persistida con el carrito). */
+/** Envío confirmado en el checkout (persistido con el carrito). */
 export type ShippingQuoteSnapshot = {
-  /** CP normalizado guardado al cotizar (servidor lo recotiza al pagar). */
+  method: ShippingMethod;
+  /** CP normalizado (servidor lo recotiza al pagar). */
   normalizedPostalCode: string;
   costARS: number;
   label: string;
@@ -41,6 +43,8 @@ type CartState = {
   buyer: CheckoutBuyerPayload;
   /** Texto del input de CP (solo UX). */
   shippingPostalInput: string;
+  /** Método elegido en paso envío (antes de confirmar cotización). */
+  shippingMethod: ShippingMethod;
   shipping: ShippingQuoteSnapshot | null;
   addOrUpdateLine: (input: {
     productId: string;
@@ -57,6 +61,7 @@ type CartState = {
   setQuantity: (lineId: string, quantity: number) => void;
   removeLine: (lineId: string) => void;
   setShippingPostalInput: (value: string) => void;
+  setShippingMethod: (method: ShippingMethod) => void;
   setShippingQuote: (snapshot: ShippingQuoteSnapshot) => void;
   setBuyer: (patch: Partial<CheckoutBuyerPayload>) => void;
   clearShipping: () => void;
@@ -66,6 +71,7 @@ type CartState = {
 function emptyShipping() {
   return {
     shippingPostalInput: "",
+    shippingMethod: "correo" as ShippingMethod,
     shipping: null as ShippingQuoteSnapshot | null,
   };
 }
@@ -164,9 +170,16 @@ export const useCartStore = create<CartState>()(
           };
         }),
 
+      setShippingMethod: (method) =>
+        set({
+          shippingMethod: method,
+          shipping: null,
+        }),
+
       setShippingQuote: (snapshot) =>
         set({
           shipping: snapshot,
+          shippingMethod: snapshot.method,
         }),
 
       setBuyer: (patch) =>
@@ -190,6 +203,20 @@ export const useCartStore = create<CartState>()(
             p.buyer && typeof p.buyer === "object"
               ? { ...emptyBuyer(), ...p.buyer }
               : currentState.buyer,
+          shippingMethod:
+            p.shippingMethod === "correo" || p.shippingMethod === "coordinar"
+              ? p.shippingMethod
+              : currentState.shippingMethod,
+          shipping:
+            p.shipping && typeof p.shipping === "object"
+              ? {
+                  ...p.shipping,
+                  method:
+                    p.shipping.method === "correo" || p.shipping.method === "coordinar"
+                      ? p.shipping.method
+                      : "correo",
+                }
+              : currentState.shipping,
         };
       },
     },

@@ -40,6 +40,17 @@ export default async function AdminProductosPage() {
         <CatalogSyncToast />
       </Suspense>
 
+      <div className="mt-6 flex flex-wrap gap-3 rounded-2xl border border-brand/15 bg-brand/5 px-4 py-4 text-sm">
+        <span className="w-full font-semibold text-brand sm:w-auto">También en el panel:</span>
+        <Link href="/admin/ventas" className="font-semibold text-brand underline-offset-2 hover:underline">
+          Ver ventas
+        </Link>
+        <span className="text-foreground/40">·</span>
+        <Link href="/admin/clientes" className="font-semibold text-brand underline-offset-2 hover:underline">
+          Ver clientes
+        </Link>
+      </div>
+
       {products.length === 0 ? (
         <p className="mt-8 text-foreground/75">No hay productos cargados.</p>
       ) : (

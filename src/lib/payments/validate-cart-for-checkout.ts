@@ -5,6 +5,7 @@ import {
   quoteShippingByPostalCode,
 } from "@/lib/shipping/quote";
 import type { CartLine } from "@/store/cart";
+import { SHIPPING_COORDINAR_LABEL, type ShippingMethod } from "@/types/shipping";
 
 export type MercadoPagoPreferenceItem = {
   id: string;
@@ -17,27 +18,44 @@ export type MercadoPagoPreferenceItem = {
 export type ValidatedCheckout = {
   items: MercadoPagoPreferenceItem[];
   external_reference: string;
-  /** CP normalizado (misma lógica que cotización de envío). */
   normalizedPostalCode: string;
+  shippingMethod: ShippingMethod;
+  shippingLabel: string;
 };
 
 export async function validateCartForCheckout(
   lines: CartLine[],
   postalCodeRaw: string,
+  shippingMethod: ShippingMethod,
 ): Promise<{ ok: true; data: ValidatedCheckout } | { ok: false; error: string }> {
   if (!lines.length) {
     return { ok: false, error: "El carrito está vacío." };
   }
 
-  const shippingQuote = quoteShippingByPostalCode(postalCodeRaw);
-  if (!shippingQuote) {
+  const normalizedPostalCode = normalizeArgentinePostalCode(postalCodeRaw);
+  if (normalizedPostalCode.length < 4) {
     return {
       ok: false,
-      error: "Ingresá un código postal válido para calcular el envío (mínimo 4 caracteres).",
+      error: "Ingresá un código postal válido (mínimo 4 caracteres).",
     };
   }
 
-  const normalizedPostalCode = normalizeArgentinePostalCode(postalCodeRaw);
+  let shippingLabel: string;
+  let shippingCostARS = 0;
+
+  if (shippingMethod === "coordinar") {
+    shippingLabel = SHIPPING_COORDINAR_LABEL;
+  } else {
+    const shippingQuote = quoteShippingByPostalCode(postalCodeRaw);
+    if (!shippingQuote) {
+      return {
+        ok: false,
+        error: "Ingresá un código postal válido para calcular el envío (mínimo 4 caracteres).",
+      };
+    }
+    shippingLabel = shippingQuote.label;
+    shippingCostARS = shippingQuote.costARS;
+  }
 
   const currencies = new Set(lines.map((l) => l.currency));
   if (currencies.size !== 1) {
@@ -92,12 +110,12 @@ export async function validateCartForCheckout(
     });
   }
 
-  if (shippingQuote.costARS > 0) {
+  if (shippingMethod === "correo" && shippingCostARS > 0) {
     items.push({
       id: "shipping-zigyzoo",
-      title: `Envío — ${shippingQuote.label}`.slice(0, 250),
+      title: `Envío — ${shippingLabel}`.slice(0, 250),
       quantity: 1,
-      unit_price: Number(shippingQuote.costARS.toFixed(2)),
+      unit_price: Number(shippingCostARS.toFixed(2)),
       currency_id: "ARS",
     });
   }
@@ -105,6 +123,12 @@ export async function validateCartForCheckout(
   const external_reference = `zigyzoo-${randomUUID()}`;
   return {
     ok: true,
-    data: { items, external_reference, normalizedPostalCode },
+    data: {
+      items,
+      external_reference,
+      normalizedPostalCode,
+      shippingMethod,
+      shippingLabel,
+    },
   };
 }

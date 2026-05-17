@@ -6,3 +6,11 @@ export function formatMoney(amount: number, currency = "ARS") {
     maximumFractionDigits: 2,
   }).format(amount);
 }
+
+export function formatDateTimeAR(value: Date | string) {
+  return new Intl.DateTimeFormat("es-AR", {
+    dateStyle: "short",
+    timeStyle: "short",
+    timeZone: "America/Argentina/Buenos_Aires",
+  }).format(new Date(value));
+}

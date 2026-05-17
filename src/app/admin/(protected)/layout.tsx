@@ -57,6 +57,12 @@ export default async function AdminProtectedLayout({
             <Link href="/admin/productos" className="hover:underline">
               Productos
             </Link>
+            <Link href="/admin/ventas" className="hover:underline">
+              Ventas
+            </Link>
+            <Link href="/admin/clientes" className="hover:underline">
+              Clientes
+            </Link>
             <Link href="/admin/productos/nuevo" className="hover:underline">
               Nuevo producto
             </Link>

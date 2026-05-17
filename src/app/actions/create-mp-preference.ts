@@ -11,6 +11,7 @@ import {
 import { validateCartForCheckout } from "@/lib/payments/validate-cart-for-checkout";
 import type { CartLine } from "@/store/cart";
 import type { CheckoutBuyerPayload } from "@/types/checkout-buyer";
+import type { ShippingMethod } from "@/types/shipping";
 
 export type CreateMpPreferenceResult =
   | { ok: true; url: string }
@@ -42,6 +43,7 @@ export async function createMercadoPagoPreference(
   lines: CartLine[],
   postalCodeRaw: string,
   buyer: CheckoutBuyerPayload,
+  shippingMethod: ShippingMethod,
 ): Promise<CreateMpPreferenceResult> {
   const token = process.env.MERCADOPAGO_ACCESS_TOKEN?.trim();
   if (!token) {
@@ -52,7 +54,7 @@ export async function createMercadoPagoPreference(
     };
   }
 
-  const validated = await validateCartForCheckout(lines, postalCodeRaw);
+  const validated = await validateCartForCheckout(lines, postalCodeRaw, shippingMethod);
   if (!validated.ok) return validated;
 
   const buyerOk = validateBuyerPayload(buyer);
@@ -61,10 +63,18 @@ export async function createMercadoPagoPreference(
   }
   const payerData = buyerOk.buyer;
 
+  const totalAmountArs = validated.data.items.reduce(
+    (sum, i) => sum + i.unit_price * i.quantity,
+    0,
+  );
+
   await persistCheckoutSessionToNeon({
     externalReference: validated.data.external_reference,
     buyer: payerData,
     shippingPostalCode: validated.data.normalizedPostalCode,
+    shippingMethod: validated.data.shippingMethod,
+    shippingLabel: validated.data.shippingLabel,
+    totalAmountArs,
   });
 
   const base = getCheckoutBaseUrl();
@@ -73,7 +83,9 @@ export async function createMercadoPagoPreference(
   const client = new MercadoPagoConfig({ accessToken: token });
   const preference = new Preference(client);
 
-  const notificationUrl = process.env.MERCADOPAGO_NOTIFICATION_URL?.trim();
+  const notificationUrl =
+    process.env.MERCADOPAGO_NOTIFICATION_URL?.trim() ||
+    `${base}/api/mercadopago/webhook`;
 
   try {
     const body = {
@@ -98,11 +110,13 @@ export async function createMercadoPagoPreference(
       metadata: {
         buyer_dni: payerData.dni,
         buyer_phone: payerData.phoneRaw,
+        shipping_method: validated.data.shippingMethod,
+        shipping_label: validated.data.shippingLabel,
       },
       back_urls,
       ...(useAutoReturn ? { auto_return: "approved" as const } : {}),
       statement_descriptor: "ZIGYZOO",
-      ...(notificationUrl ? { notification_url: notificationUrl } : {}),
+      notification_url: notificationUrl,
     };
 
     const result = await preference.create({ body });

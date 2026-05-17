@@ -93,10 +93,25 @@ create table if not exists public.checkout_sessions (
   buyer_phone text not null,
   buyer_email text not null,
   shipping_postal_code text,
+  shipping_method text check (shipping_method in ('correo', 'coordinar')),
+  shipping_label text,
+  total_amount_ars numeric(12, 2),
+  payment_status text not null default 'iniciado'
+    check (payment_status in ('iniciado', 'approved', 'pending', 'rejected')),
+  mp_payment_id text,
+  paid_at timestamptz,
   created_at timestamptz not null default now()
 );
 
 create index if not exists idx_checkout_sessions_created on public.checkout_sessions (created_at desc);
+
+-- Si la tabla ya existía sin estas columnas:
+-- alter table public.checkout_sessions add column if not exists shipping_method text check (shipping_method in ('correo', 'coordinar'));
+-- alter table public.checkout_sessions add column if not exists shipping_label text;
+-- alter table public.checkout_sessions add column if not exists total_amount_ars numeric(12, 2);
+-- alter table public.checkout_sessions add column if not exists payment_status text not null default 'iniciado';
+-- alter table public.checkout_sessions add column if not exists mp_payment_id text;
+-- alter table public.checkout_sessions add column if not exists paid_at timestamptz;
 
 insert into public.categories (name, slug, sort_order)
 values
