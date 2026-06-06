@@ -1,14 +1,13 @@
 import Link from "next/link";
 import { AdminClientsTable } from "@/components/admin/AdminClientsTable";
-import { AdminSalesDbNotice } from "@/components/admin/AdminSalesDbNotice";
-import { getAdminClients, getCheckoutSessionCount } from "@/data/admin-sales";
+import { getAdminClients, getSalesPanelDiagnostics } from "@/data/admin-sales";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminClientesPage() {
-  const [clients, sessionCount] = await Promise.all([
+  const [clients, diagnostics] = await Promise.all([
     getAdminClients(),
-    getCheckoutSessionCount(),
+    getSalesPanelDiagnostics(),
   ]);
 
   return (
@@ -29,7 +28,20 @@ export default async function AdminClientesPage() {
         </Link>
       </div>
 
-      <AdminSalesDbNotice sessionCount={sessionCount} listEmpty={clients.length === 0} />
+      {diagnostics.sessionCount === null && (
+        <p className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+          No se pudo conectar a la base de datos. Revisá{" "}
+          <code className="rounded bg-white/80 px-1">DATABASE_URL</code> en Vercel.
+        </p>
+      )}
+      {diagnostics.sessionCount !== null &&
+        diagnostics.sessionCount > 0 &&
+        clients.length === 0 && (
+          <p className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+            Hay {diagnostics.sessionCount} checkout(s) en la base pero no se pudieron listar. Redeployá el sitio con
+            la última versión del código.
+          </p>
+        )}
       <AdminClientsTable rows={clients} />
     </div>
   );

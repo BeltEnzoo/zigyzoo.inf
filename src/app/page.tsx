@@ -6,7 +6,6 @@ import { ClientesSection } from "@/components/landing/ClientesSection";
 import { ContactoSection } from "@/components/landing/ContactoSection";
 import { EnviosPagosSection } from "@/components/landing/EnviosPagosSection";
 import { FaqSection } from "@/components/landing/FaqSection";
-import { GaleriaInfantil } from "@/components/landing/GaleriaInfantil";
 import { QuienesSomos } from "@/components/landing/QuienesSomos";
 import { TrustStrip } from "@/components/landing/TrustStrip";
 import { SiteFooter } from "@/components/SiteFooter";
@@ -61,7 +60,6 @@ export default function Home() {
             </div>
           </div>
         </section>
-        <GaleriaInfantil />
 
         <section
           id="info"

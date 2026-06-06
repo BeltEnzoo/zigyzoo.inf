@@ -1,14 +1,14 @@
 import Link from "next/link";
 import { AdminCheckoutsTable } from "@/components/admin/AdminCheckoutsTable";
 import { AdminSalesDbNotice } from "@/components/admin/AdminSalesDbNotice";
-import { getAdminCheckouts, getCheckoutSessionCount } from "@/data/admin-sales";
+import { getAdminCheckouts, getSalesPanelDiagnostics } from "@/data/admin-sales";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminVentasPage() {
-  const [checkouts, sessionCount] = await Promise.all([
+  const [checkouts, diagnostics] = await Promise.all([
     getAdminCheckouts(),
-    getCheckoutSessionCount(),
+    getSalesPanelDiagnostics(),
   ]);
 
   return (
@@ -30,7 +30,12 @@ export default async function AdminVentasPage() {
         </Link>
       </div>
 
-      <AdminSalesDbNotice sessionCount={sessionCount} listEmpty={checkouts.length === 0} />
+      <AdminSalesDbNotice
+        sessionCount={diagnostics.sessionCount}
+        approvedCount={diagnostics.approvedCount}
+        paymentStatusColumnMissing={diagnostics.paymentStatusColumnMissing}
+        listEmpty={checkouts.length === 0}
+      />
       <AdminCheckoutsTable rows={checkouts} />
     </div>
   );

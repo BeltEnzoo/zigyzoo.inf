@@ -175,15 +175,43 @@ export async function getAdminClients(limit = 500): Promise<AdminClientRow[]> {
   }
 }
 
-/** Para diagnosticar panel vacío vs datos en Neon. */
-export async function getCheckoutSessionCount(): Promise<number | null> {
+export type SalesPanelDiagnostics = {
+  sessionCount: number | null;
+  approvedCount: number | null;
+  paymentStatusColumnMissing: boolean;
+};
+
+/** Para diagnosticar panel Ventas vs datos en Neon. */
+export async function getSalesPanelDiagnostics(): Promise<SalesPanelDiagnostics> {
   const sql = getSql();
-  if (!sql) return null;
+  if (!sql) {
+    return { sessionCount: null, approvedCount: null, paymentStatusColumnMissing: false };
+  }
+
   try {
-    const rows = await sql`select count(*)::int as c from public.checkout_sessions`;
-    return (rows[0] as { c: number }).c ?? 0;
+    const totalRows = await sql`select count(*)::int as c from public.checkout_sessions`;
+    const sessionCount = (totalRows[0] as { c: number }).c ?? 0;
+
+    try {
+      const approvedRows = await sql`
+        select count(*)::int as c
+        from public.checkout_sessions
+        where payment_status = 'approved'
+      `;
+      return {
+        sessionCount,
+        approvedCount: (approvedRows[0] as { c: number }).c ?? 0,
+        paymentStatusColumnMissing: false,
+      };
+    } catch {
+      return {
+        sessionCount,
+        approvedCount: null,
+        paymentStatusColumnMissing: true,
+      };
+    }
   } catch {
-    return null;
+    return { sessionCount: null, approvedCount: null, paymentStatusColumnMissing: false };
   }
 }
 

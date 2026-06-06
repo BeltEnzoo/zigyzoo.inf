@@ -1,4 +1,4 @@
-import { parseProductImageUrls } from "@/lib/catalog/image-urls";
+import { parseProductImageUrls, parseVariantImageUrlsByVariant } from "@/lib/catalog/image-urls";
 import { parseSheetIsActive } from "@/lib/catalog/sheet-boolean";
 import { splitAlignedToSizes } from "@/lib/catalog/variant-extras";
 import type { Category, ProductListItem } from "@/types/shop";
@@ -205,6 +205,12 @@ export function parseRowsToProductListItems(rows: RowMap[]): ProductListItem[] {
       "tamanoproducto",
     );
     const imageUrlsRaw = pick(row, "image_urls", "imageurls");
+    const variantImageUrlsRaw = pick(
+      row,
+      "variant_image_urls",
+      "variantimageurls",
+      "variant_image_url",
+    );
 
     if (!name || !slug || !priceRaw) continue;
 
@@ -258,7 +264,21 @@ export function parseRowsToProductListItems(rows: RowMap[]): ProductListItem[] {
           stock: stocks[v],
           color_producto: colors[v],
           tamano_producto: tamanos[v],
+          variant_images: [],
         });
+      }
+
+      const variantImageBlocks = parseVariantImageUrlsByVariant(
+        variantImageUrlsRaw,
+        product_variants.length,
+      );
+      for (let v = 0; v < product_variants.length; v++) {
+        const urls = variantImageBlocks[v] ?? [];
+        product_variants[v].variant_images = urls.map((url, im) => ({
+          id: `${productId}:v:${v}:img:${im}`,
+          url,
+          sort_order: im,
+        }));
       }
     }
 

@@ -26,6 +26,14 @@ export type ProductVariant = {
   sort_order: number;
   color_producto: string | null;
   tamano_producto: string | null;
+  /** Fotos propias de esta variante (desde Sheet: `variant_image_urls`). */
+  variant_images?: ProductImagePick[];
+};
+
+export type ProductImagePick = {
+  id: string;
+  url: string;
+  sort_order: number;
 };
 
 export type ProductImage = {
@@ -41,7 +49,12 @@ export type ProductListItem = Product & {
   product_images: Pick<ProductImage, "id" | "url" | "sort_order">[];
   product_variants: Pick<
     ProductVariant,
-    "id" | "stock" | "size_label" | "color_producto" | "tamano_producto"
+    | "id"
+    | "stock"
+    | "size_label"
+    | "color_producto"
+    | "tamano_producto"
+    | "variant_images"
   >[];
 };
 

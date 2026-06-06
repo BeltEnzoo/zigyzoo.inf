@@ -10,6 +10,10 @@ function totalStock(p: ProductListItem) {
 }
 
 function firstImage(p: ProductListItem) {
+  for (const v of p.product_variants ?? []) {
+    const imgs = [...(v.variant_images ?? [])].sort((a, b) => a.sort_order - b.sort_order);
+    if (imgs[0]?.url) return imgs[0].url;
+  }
   const imgs = [...(p.product_images ?? [])].sort(
     (a, b) => a.sort_order - b.sort_order,
   );

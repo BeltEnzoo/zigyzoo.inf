@@ -85,10 +85,27 @@ export async function sendContactEmail(payload: ContactPayload): Promise<SendCon
   if (!res.ok) {
     const errText = await res.text().catch(() => "");
     console.error("[contact] Resend", res.status, errText);
+
+    let providerMessage = "No se pudo enviar el mensaje. Intentá de nuevo más tarde.";
+    try {
+      const parsed = JSON.parse(errText) as { message?: string };
+      const raw = parsed.message?.trim() ?? "";
+      if (raw.includes("only send testing emails to your own email address")) {
+        providerMessage =
+          "El correo del formulario aún no está listo para producción: verificá tu dominio en Resend " +
+          "(resend.com/domains) y configurá CONTACT_EMAIL_FROM, o usá CONTACT_EMAIL_TO con el email " +
+          "de la cuenta de Resend mientras tanto.";
+      } else if (process.env.NODE_ENV !== "production" && raw) {
+        providerMessage = raw;
+      }
+    } catch {
+      // respuesta no JSON
+    }
+
     return {
       ok: false,
       code: "provider_error",
-      message: "No se pudo enviar el mensaje. Intentá de nuevo más tarde.",
+      message: providerMessage,
     };
   }
 

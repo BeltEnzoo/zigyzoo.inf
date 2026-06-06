@@ -90,6 +90,7 @@ function toDetail(p: ProductListItem): ProductDetail {
       sort_order: i,
       color_producto: v.color_producto ?? null,
       tamano_producto: v.tamano_producto ?? null,
+      variant_images: v.variant_images ?? [],
     })),
   };
 }
