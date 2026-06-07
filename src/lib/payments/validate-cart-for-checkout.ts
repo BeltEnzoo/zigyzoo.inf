@@ -2,7 +2,8 @@ import { randomUUID } from "crypto";
 import { getProductBySlug } from "@/data/shop";
 import {
   normalizeArgentinePostalCode,
-  quoteShippingByPostalCode,
+  quoteShippingByMethod,
+  shippingMethodChargesInCheckout,
 } from "@/lib/shipping/quote";
 import type { CartLine } from "@/store/cart";
 import { SHIPPING_COORDINAR_LABEL, type ShippingMethod } from "@/types/shipping";
@@ -46,11 +47,15 @@ export async function validateCartForCheckout(
   if (shippingMethod === "coordinar") {
     shippingLabel = SHIPPING_COORDINAR_LABEL;
   } else {
-    const shippingQuote = quoteShippingByPostalCode(postalCodeRaw);
+    const shippingQuote = quoteShippingByMethod(shippingMethod, postalCodeRaw);
     if (!shippingQuote) {
+      const hint =
+        shippingMethod === "entrega_propia"
+          ? "Entrega propia no está disponible para ese código postal."
+          : "Correo a sucursal no está disponible para ese código postal.";
       return {
         ok: false,
-        error: "Ingresá un código postal válido para calcular el envío (mínimo 4 caracteres).",
+        error: `${hint} Probá otra opción o coordiná con la tienda.`,
       };
     }
     shippingLabel = shippingQuote.label;
@@ -110,7 +115,7 @@ export async function validateCartForCheckout(
     });
   }
 
-  if (shippingMethod === "correo" && shippingCostARS > 0) {
+  if (shippingMethodChargesInCheckout(shippingMethod) && shippingCostARS > 0) {
     items.push({
       id: "shipping-zigyzoo",
       title: `Envío — ${shippingLabel}`.slice(0, 250),

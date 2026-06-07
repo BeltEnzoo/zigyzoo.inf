@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { normalizeArgentinePostalCode } from "@/lib/shipping/quote";
 import type { CheckoutBuyerPayload } from "@/types/checkout-buyer";
-import type { ShippingMethod } from "@/types/shipping";
+import { normalizeShippingMethod, type ShippingMethod } from "@/types/shipping";
 
 export type CartLine = {
   lineId: string;
@@ -71,7 +71,7 @@ type CartState = {
 function emptyShipping() {
   return {
     shippingPostalInput: "",
-    shippingMethod: "correo" as ShippingMethod,
+    shippingMethod: "correo_sucursal" as ShippingMethod,
     shipping: null as ShippingQuoteSnapshot | null,
   };
 }
@@ -203,18 +203,12 @@ export const useCartStore = create<CartState>()(
             p.buyer && typeof p.buyer === "object"
               ? { ...emptyBuyer(), ...p.buyer }
               : currentState.buyer,
-          shippingMethod:
-            p.shippingMethod === "correo" || p.shippingMethod === "coordinar"
-              ? p.shippingMethod
-              : currentState.shippingMethod,
+          shippingMethod: normalizeShippingMethod(p.shippingMethod),
           shipping:
             p.shipping && typeof p.shipping === "object"
               ? {
                   ...p.shipping,
-                  method:
-                    p.shipping.method === "correo" || p.shipping.method === "coordinar"
-                      ? p.shipping.method
-                      : "correo",
+                  method: normalizeShippingMethod(p.shipping.method),
                 }
               : currentState.shipping,
         };

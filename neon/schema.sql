@@ -93,7 +93,10 @@ create table if not exists public.checkout_sessions (
   buyer_phone text not null,
   buyer_email text not null,
   shipping_postal_code text,
-  shipping_method text check (shipping_method in ('correo', 'coordinar')),
+  shipping_method text check (
+    shipping_method is null
+    or shipping_method in ('correo', 'correo_sucursal', 'entrega_propia', 'coordinar')
+  ),
   shipping_label text,
   total_amount_ars numeric(12, 2),
   payment_status text not null default 'iniciado'

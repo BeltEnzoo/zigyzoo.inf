@@ -8,10 +8,14 @@ import { getWhatsAppUrl } from "@/config/site";
 import { validateBuyerPayload } from "@/lib/checkout/validate-buyer";
 import { formatMoney } from "@/lib/format";
 import { buildCoordinarWhatsAppMessage } from "@/lib/shipping/build-coordinar-whatsapp-message";
-import { normalizeArgentinePostalCode, quoteShippingByPostalCode } from "@/lib/shipping/quote";
+import { normalizeArgentinePostalCode, quoteShippingByMethod, shippingMethodChargesInCheckout } from "@/lib/shipping/quote";
 import { cartGrandTotal, cartSubtotal, useCartStore } from "@/store/cart";
 import type { ShippingMethod } from "@/types/shipping";
-import { SHIPPING_COORDINAR_LABEL } from "@/types/shipping";
+import {
+  SHIPPING_COORDINAR_LABEL,
+  SHIPPING_CORREO_SUCURSAL_TITLE,
+  SHIPPING_ENTREGA_PROPIA_TITLE,
+} from "@/types/shipping";
 
 const STEPS = [
   { n: 1, title: "Carrito", short: "Carrito" },
@@ -29,7 +33,7 @@ export function CarritoView({ mercadoPagoConfigured = false }: Props) {
   const lines = useCartStore((s) => s.lines);
   const shippingPostalInput = useCartStore((s) => s.shippingPostalInput ?? "");
   const shipping = useCartStore((s) => s.shipping);
-  const shippingMethod = useCartStore((s) => s.shippingMethod ?? "correo");
+  const shippingMethod = useCartStore((s) => s.shippingMethod ?? "correo_sucursal");
   const buyer = useCartStore((s) => s.buyer);
   const setBuyer = useCartStore((s) => s.setBuyer);
   const setShippingPostalInput = useCartStore((s) => s.setShippingPostalInput);
@@ -92,16 +96,25 @@ export function CarritoView({ mercadoPagoConfigured = false }: Props) {
 
   function handleQuoteShipping() {
     setQuoteError(null);
-    const q = quoteShippingByPostalCode(shippingPostalInput);
-    if (!q) {
+    const norm = normalizeArgentinePostalCode(shippingPostalInput);
+    if (norm.length < 4) {
       setQuoteError(
         "Ingresá un código postal válido (mínimo 4 caracteres). En Argentina suele incluir letras, ej. B1643 o C1425.",
       );
       return;
     }
+    const q = quoteShippingByMethod(shippingMethod, shippingPostalInput);
+    if (!q) {
+      setQuoteError(
+        shippingMethod === "entrega_propia"
+          ? "Entrega propia no está disponible para ese código postal. Probá Correo (sucursal) o coordinar con la tienda."
+          : "Correo a sucursal no está disponible para ese código postal. Probá entrega propia o coordinar con la tienda.",
+      );
+      return;
+    }
     setShippingQuote({
-      method: "correo",
-      normalizedPostalCode: normalizeArgentinePostalCode(shippingPostalInput),
+      method: shippingMethod,
+      normalizedPostalCode: norm,
       costARS: q.costARS,
       label: q.label,
     });
@@ -419,15 +432,15 @@ export function CarritoView({ mercadoPagoConfigured = false }: Props) {
         <section className="rounded-2xl border border-black/5 bg-white px-4 py-5 sm:px-6">
           <h2 className="font-display text-lg font-bold text-brand">Envío</h2>
           <p className="mt-2 text-sm text-foreground/70">
-            Elegí cómo querés recibir el pedido. Con Correo Argentino ves el precio al instante; si preferís, lo
-            coordinamos por WhatsApp (el envío se abona aparte).
+            Elegí cómo querés recibir el pedido. Entrega propia (CABA/GBA) y Correo en sucursal muestran el precio al
+            instante según tu CP; también podés coordinar por WhatsApp (el envío se abona aparte).
           </p>
 
           <fieldset className="mt-4 space-y-2">
             <legend className="sr-only">Método de envío</legend>
             <label
               className={`flex cursor-pointer gap-3 rounded-2xl border px-4 py-3 transition ${
-                shippingMethod === "correo"
+                shippingMethod === "entrega_propia"
                   ? "border-brand bg-brand/5 ring-2 ring-brand/20"
                   : "border-black/10 bg-surface-ice/30 hover:border-brand/30"
               }`}
@@ -436,13 +449,34 @@ export function CarritoView({ mercadoPagoConfigured = false }: Props) {
                 type="radio"
                 name="shipping-method"
                 className="mt-1 accent-brand"
-                checked={shippingMethod === "correo"}
-                onChange={() => selectShippingMethod("correo")}
+                checked={shippingMethod === "entrega_propia"}
+                onChange={() => selectShippingMethod("entrega_propia")}
               />
               <span>
-                <span className="font-semibold text-foreground">Correo Argentino</span>
+                <span className="font-semibold text-foreground">{SHIPPING_ENTREGA_PROPIA_TITLE}</span>
                 <span className="mt-0.5 block text-sm text-foreground/65">
-                  Precio según tu código postal (zonas del país).
+                  Entregamos nosotros en CABA y zonas de GBA según tu código postal.
+                </span>
+              </span>
+            </label>
+            <label
+              className={`flex cursor-pointer gap-3 rounded-2xl border px-4 py-3 transition ${
+                shippingMethod === "correo_sucursal"
+                  ? "border-brand bg-brand/5 ring-2 ring-brand/20"
+                  : "border-black/10 bg-surface-ice/30 hover:border-brand/30"
+              }`}
+            >
+              <input
+                type="radio"
+                name="shipping-method"
+                className="mt-1 accent-brand"
+                checked={shippingMethod === "correo_sucursal"}
+                onChange={() => selectShippingMethod("correo_sucursal")}
+              />
+              <span>
+                <span className="font-semibold text-foreground">{SHIPPING_CORREO_SUCURSAL_TITLE}</span>
+                <span className="mt-0.5 block text-sm text-foreground/65">
+                  Retiro en sucursal del Correo Argentino (tarifa referencia ~1 kg).
                 </span>
               </span>
             </label>
@@ -485,7 +519,7 @@ export function CarritoView({ mercadoPagoConfigured = false }: Props) {
                 className="min-h-12 w-full rounded-2xl border border-black/10 bg-surface-ice/40 px-4 py-3 text-[16px] outline-none focus:border-brand focus:ring-2 focus:ring-brand/20 sm:text-sm"
               />
             </div>
-            {shippingMethod === "correo" ? (
+            {shippingMethodChargesInCheckout(shippingMethod) ? (
               <button
                 type="button"
                 onClick={handleQuoteShipping}
@@ -535,7 +569,7 @@ export function CarritoView({ mercadoPagoConfigured = false }: Props) {
             <div className="mt-4 space-y-3">
               <p className="text-sm text-foreground/85">
                 <span className="font-semibold text-brand">{shipping.label}</span>
-                {shipping.method === "correo" && (
+                {shippingMethodChargesInCheckout(shipping.method) && (
                   <>
                     {" · "}
                     <span className="font-bold">{formatMoney(shipping.costARS, currency)}</span>
@@ -633,7 +667,7 @@ export function CarritoView({ mercadoPagoConfigured = false }: Props) {
               lines={lines}
               postalCodeRaw={shippingPostalInput}
               buyer={buyer}
-              shippingMethod={shipping?.method ?? "correo"}
+              shippingMethod={shipping?.method ?? "correo_sucursal"}
               shippingReady={shipping !== null}
               buyerReady={buyerReady}
               disabled={!mercadoPagoConfigured}
