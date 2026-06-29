@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { LogoutButton } from "@/components/admin/LogoutButton";
 import { clearAdminSessionCookie, getAdminSession } from "@/lib/auth/session";
 import { isAdminPanelReady } from "@/lib/admin/readiness";
+import { getCatalogSource } from "@/lib/catalog/catalog-source";
 import { getSql } from "@/lib/db/neon";
 
 export default async function AdminProtectedLayout({
@@ -32,6 +33,8 @@ export default async function AdminProtectedLayout({
     redirect("/admin/login");
   }
 
+  const catalog = getCatalogSource();
+
   const sql = getSql();
   if (sql) {
     const ok = await sql`
@@ -57,6 +60,11 @@ export default async function AdminProtectedLayout({
             <Link href="/admin/productos" className="hover:underline">
               Productos
             </Link>
+            {catalog === "sheet" && (
+              <Link href="/admin/precios" className="hover:underline">
+                Precios
+              </Link>
+            )}
             <Link href="/admin/ventas" className="hover:underline">
               Ventas
             </Link>

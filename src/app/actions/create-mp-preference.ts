@@ -1,6 +1,7 @@
 "use server";
 
 import { MercadoPagoConfig, Preference } from "mercadopago";
+import { assertCheckoutBuyerIdentityUnique } from "@/lib/checkout/assert-buyer-identity";
 import { persistCheckoutSessionToNeon } from "@/lib/checkout/persist-checkout-session";
 import { validateBuyerPayload } from "@/lib/checkout/validate-buyer";
 import {
@@ -63,6 +64,11 @@ export async function createMercadoPagoPreference(
   }
   const payerData = buyerOk.buyer;
 
+  const identityOk = await assertCheckoutBuyerIdentityUnique(payerData);
+  if (!identityOk.ok) {
+    return { ok: false, error: identityOk.error };
+  }
+
   const totalAmountArs = validated.data.items.reduce(
     (sum, i) => sum + i.unit_price * i.quantity,
     0,
@@ -75,6 +81,7 @@ export async function createMercadoPagoPreference(
     shippingMethod: validated.data.shippingMethod,
     shippingLabel: validated.data.shippingLabel,
     totalAmountArs,
+    orderLines: validated.data.orderLines,
   });
 
   const base = getCheckoutBaseUrl();

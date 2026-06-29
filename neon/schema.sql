@@ -103,6 +103,8 @@ create table if not exists public.checkout_sessions (
     check (payment_status in ('iniciado', 'approved', 'pending', 'rejected')),
   mp_payment_id text,
   paid_at timestamptz,
+  order_items_json jsonb,
+  stock_adjusted_at timestamptz,
   created_at timestamptz not null default now()
 );
 

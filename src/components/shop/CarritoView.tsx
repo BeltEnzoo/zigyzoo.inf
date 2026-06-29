@@ -8,7 +8,12 @@ import { getWhatsAppUrl } from "@/config/site";
 import { validateBuyerPayload } from "@/lib/checkout/validate-buyer";
 import { formatMoney } from "@/lib/format";
 import { buildCoordinarWhatsAppMessage } from "@/lib/shipping/build-coordinar-whatsapp-message";
-import { normalizeArgentinePostalCode, quoteShippingByMethod, shippingMethodChargesInCheckout } from "@/lib/shipping/quote";
+import {
+  formatNormalizedPostalCodeForStorage,
+  isValidShippingPostalInput,
+  quoteShippingByMethod,
+  shippingMethodChargesInCheckout,
+} from "@/lib/shipping/quote";
 import { cartGrandTotal, cartSubtotal, useCartStore } from "@/store/cart";
 import type { ShippingMethod } from "@/types/shipping";
 import {
@@ -96,10 +101,9 @@ export function CarritoView({ mercadoPagoConfigured = false }: Props) {
 
   function handleQuoteShipping() {
     setQuoteError(null);
-    const norm = normalizeArgentinePostalCode(shippingPostalInput);
-    if (norm.length < 4) {
+    if (!isValidShippingPostalInput(shippingPostalInput)) {
       setQuoteError(
-        "Ingresá un código postal válido (mínimo 4 caracteres). En Argentina suele incluir letras, ej. B1643 o C1425.",
+        "Ingresá un código postal válido (4 dígitos, ej. 1000 o 1643, o con letra: C1425 / B1643).",
       );
       return;
     }
@@ -114,7 +118,7 @@ export function CarritoView({ mercadoPagoConfigured = false }: Props) {
     }
     setShippingQuote({
       method: shippingMethod,
-      normalizedPostalCode: norm,
+      normalizedPostalCode: formatNormalizedPostalCodeForStorage(shippingPostalInput),
       costARS: q.costARS,
       label: q.label,
     });
@@ -122,16 +126,15 @@ export function CarritoView({ mercadoPagoConfigured = false }: Props) {
 
   function handleConfirmCoordinar() {
     setQuoteError(null);
-    const norm = normalizeArgentinePostalCode(shippingPostalInput);
-    if (norm.length < 4) {
+    if (!isValidShippingPostalInput(shippingPostalInput)) {
       setQuoteError(
-        "Ingresá tu código postal (mínimo 4 caracteres) para que podamos cotizar el envío por WhatsApp.",
+        "Ingresá tu código postal (4 dígitos o con letra, ej. 1000 o B1643) para coordinar el envío.",
       );
       return;
     }
     setShippingQuote({
       method: "coordinar",
-      normalizedPostalCode: norm,
+      normalizedPostalCode: formatNormalizedPostalCodeForStorage(shippingPostalInput),
       costARS: 0,
       label: SHIPPING_COORDINAR_LABEL,
     });
@@ -513,7 +516,7 @@ export function CarritoView({ mercadoPagoConfigured = false }: Props) {
                 type="text"
                 autoComplete="postal-code"
                 enterKeyHint="done"
-                placeholder="Ej. B1643FID o C1425"
+                placeholder="Ej. 1000, 1643, C1425 o B1643"
                 value={shippingPostalInput}
                 onChange={(e) => setShippingPostalInput(e.target.value)}
                 className="min-h-12 w-full rounded-2xl border border-black/10 bg-surface-ice/40 px-4 py-3 text-[16px] outline-none focus:border-brand focus:ring-2 focus:ring-brand/20 sm:text-sm"
@@ -538,7 +541,7 @@ export function CarritoView({ mercadoPagoConfigured = false }: Props) {
             )}
           </div>
 
-          {(localityLoading || shipping) && (
+          {(localityLoading || localityLabel) && (
             <div className="mt-3 rounded-xl border border-black/[0.06] bg-surface-ice/40 px-3 py-2.5">
               {localityLoading && <p className="text-sm text-foreground/60">Buscando localidad…</p>}
               {!localityLoading && localityLabel && (
@@ -551,11 +554,6 @@ export function CarritoView({ mercadoPagoConfigured = false }: Props) {
                     Dato orientativo (OpenStreetMap). El envío se cotiza por las zonas de la tienda.
                   </p>
                 </>
-              )}
-              {!localityLoading && shipping && !localityLabel && (
-                <p className="text-xs text-foreground/55">
-                  No encontramos una localidad automática para este CP; la cotización de envío sigue siendo válida.
-                </p>
               )}
             </div>
           )}

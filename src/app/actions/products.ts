@@ -1,34 +1,20 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
-import { getCatalogSource } from "@/lib/catalog/catalog-source";
+import { revalidatePath, revalidateTag } from "next/cache";
+import { getCategories } from "@/data/shop";
+import { getCatalogSource, SHEET_CATALOG_TAG } from "@/lib/catalog/catalog-source";
 import { parseProductImageUrls } from "@/lib/catalog/image-urls";
+import { appendSheetProductRow } from "@/lib/catalog/sheet-operations";
+import { isGoogleSheetsWriteConfigured } from "@/lib/catalog/sheet-config";
+import { slugify } from "@/lib/catalog/google-sheet";
 import { getAdminSession } from "@/lib/auth/session";
 import { getSql } from "@/lib/db/neon";
-
-function slugify(s: string) {
-  return s
-    .trim()
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "");
-}
 
 export type CreateProductResult = { ok: true } | { ok: false; error: string };
 
 export async function createProduct(formData: FormData): Promise<CreateProductResult> {
   const session = await getAdminSession();
   if (!session) return { ok: false, error: "No autorizado." };
-
-  if (getCatalogSource() === "sheet") {
-    return {
-      ok: false,
-      error:
-        "El catálogo se gestiona solo con la Google Sheet. Editá la hoja y usá «Actualizar catálogo» en Productos.",
-    };
-  }
 
   const sql = getSql();
   if (!sql) return { ok: false, error: "Base de datos no configurada." };
@@ -67,7 +53,8 @@ export async function createProduct(formData: FormData): Promise<CreateProductRe
     return { ok: false, error: "Cargá al menos una variante (talle, stock)." };
   }
 
-  const variants: { size_label: string; stock: number; sort_order: number }[] = [];
+  const sizes: string[] = [];
+  const stocks: number[] = [];
   for (let i = 0; i < variantLines.length; i++) {
     const line = variantLines[i];
     const parts = line.split(/[,;]/).map((p) => p.trim());
@@ -80,11 +67,51 @@ export async function createProduct(formData: FormData): Promise<CreateProductRe
     if (!Number.isInteger(stock) || stock < 0) {
       return { ok: false, error: `Línea ${i + 1}: stock debe ser un entero ≥ 0.` };
     }
-    variants.push({ size_label, stock, sort_order: i });
+    sizes.push(size_label);
+    stocks.push(stock);
+  }
+
+  if (getCatalogSource() === "sheet") {
+    if (!isGoogleSheetsWriteConfigured()) {
+      return {
+        ok: false,
+        error:
+          "Para crear productos en la hoja configurá la cuenta de servicio de Google y compartí la Sheet como Editor.",
+      };
+    }
+
+    let categorySlug = "";
+    if (categoryIdRaw) {
+      const categories = await getCategories();
+      const cat = categories.find((c) => c.id === categoryIdRaw);
+      categorySlug = cat?.slug ?? (categoryIdRaw.startsWith("cat-") ? categoryIdRaw.slice(4) : "");
+    }
+
+    const sheetResult = await appendSheetProductRow({
+      name,
+      slug,
+      description,
+      price,
+      categorySlug,
+      sizes,
+      stocks,
+      imageUrls,
+    });
+    if (!sheetResult.ok) return sheetResult;
+
+    revalidateTag(SHEET_CATALOG_TAG, "max");
+    revalidatePath("/tienda");
+    revalidatePath("/admin/productos");
+    return { ok: true };
   }
 
   const categoryId = categoryIdRaw || null;
   const desc = description || null;
+  const variants = sizes.map((size_label, i) => ({
+    size_label,
+    stock: stocks[i],
+    sort_order: i,
+  }));
 
   let productId: string;
   try {

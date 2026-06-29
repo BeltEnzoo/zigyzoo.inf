@@ -16,8 +16,9 @@ export default async function AdminClientesPage() {
         <div>
           <h1 className="font-display text-2xl font-bold text-brand">Clientes</h1>
           <p className="mt-2 max-w-2xl text-sm text-foreground/75">
-            Personas que completaron datos en el checkout, agrupadas por email. Más adelante podés usar esta lista
-            para envíos masivos o recordatorios.
+            Personas que completaron datos en el checkout, agrupadas por email. Cada DNI y cada email
+            deben corresponder a la misma persona: en compras nuevas no se permite repetir un DNI con
+            otro email (ni al revés).
           </p>
         </div>
         <Link

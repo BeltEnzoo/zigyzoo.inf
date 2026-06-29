@@ -1,11 +1,14 @@
 import { randomUUID } from "crypto";
 import { getProductBySlug } from "@/data/shop";
+import { parseVariantIndex } from "@/lib/catalog/sheet-operations";
 import {
-  normalizeArgentinePostalCode,
+  formatNormalizedPostalCodeForStorage,
+  isValidShippingPostalInput,
   quoteShippingByMethod,
   shippingMethodChargesInCheckout,
 } from "@/lib/shipping/quote";
 import type { CartLine } from "@/store/cart";
+import type { StoredOrderLine } from "@/types/checkout-order";
 import { SHIPPING_COORDINAR_LABEL, type ShippingMethod } from "@/types/shipping";
 
 export type MercadoPagoPreferenceItem = {
@@ -18,6 +21,7 @@ export type MercadoPagoPreferenceItem = {
 
 export type ValidatedCheckout = {
   items: MercadoPagoPreferenceItem[];
+  orderLines: StoredOrderLine[];
   external_reference: string;
   normalizedPostalCode: string;
   shippingMethod: ShippingMethod;
@@ -33,13 +37,14 @@ export async function validateCartForCheckout(
     return { ok: false, error: "El carrito está vacío." };
   }
 
-  const normalizedPostalCode = normalizeArgentinePostalCode(postalCodeRaw);
-  if (normalizedPostalCode.length < 4) {
+  if (!isValidShippingPostalInput(postalCodeRaw)) {
     return {
       ok: false,
-      error: "Ingresá un código postal válido (mínimo 4 caracteres).",
+      error: "Ingresá un código postal válido (4 dígitos o con letra CPA, ej. 1000 o C1425).",
     };
   }
+
+  const normalizedPostalCode = formatNormalizedPostalCodeForStorage(postalCodeRaw);
 
   let shippingLabel: string;
   let shippingCostARS = 0;
@@ -72,6 +77,7 @@ export async function validateCartForCheckout(
   }
 
   const items: MercadoPagoPreferenceItem[] = [];
+  const orderLines: StoredOrderLine[] = [];
 
   for (const line of lines) {
     const product = await getProductBySlug(line.slug);
@@ -113,6 +119,23 @@ export async function validateCartForCheckout(
       unit_price: Number(serverPrice.toFixed(2)),
       currency_id: "ARS",
     });
+
+    const variantIndex =
+      parseVariantIndex(line.variantId) ??
+      product.product_variants.findIndex((v) => v.id === line.variantId);
+    if (variantIndex < 0) {
+      return {
+        ok: false,
+        error: `No se pudo registrar la variante de "${product.name}". Actualizá el carrito.`,
+      };
+    }
+    orderLines.push({
+      slug: line.slug,
+      variantIndex,
+      quantity: line.quantity,
+      productName: product.name,
+      sizeLabel: line.sizeLabel,
+    });
   }
 
   if (shippingMethodChargesInCheckout(shippingMethod) && shippingCostARS > 0) {
@@ -130,6 +153,7 @@ export async function validateCartForCheckout(
     ok: true,
     data: {
       items,
+      orderLines,
       external_reference,
       normalizedPostalCode,
       shippingMethod,

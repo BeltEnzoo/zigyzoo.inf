@@ -1,5 +1,6 @@
 import type { ValidatedBuyer } from "@/lib/checkout/validate-buyer";
 import { getSql } from "@/lib/db/neon";
+import type { StoredOrderLine } from "@/types/checkout-order";
 import type { ShippingMethod } from "@/types/shipping";
 
 /** Guarda comprador + referencia MP en Neon (no bloquea el checkout si falla). */
@@ -10,9 +11,12 @@ export async function persistCheckoutSessionToNeon(input: {
   shippingMethod: ShippingMethod;
   shippingLabel: string;
   totalAmountArs: number;
+  orderLines: StoredOrderLine[];
 }): Promise<void> {
   const sql = getSql();
   if (!sql) return;
+
+  const orderItemsJson = JSON.stringify(input.orderLines);
 
   try {
     await sql`
@@ -27,6 +31,7 @@ export async function persistCheckoutSessionToNeon(input: {
         shipping_method,
         shipping_label,
         total_amount_ars,
+        order_items_json,
         payment_status
       ) values (
         ${input.externalReference},
@@ -39,6 +44,7 @@ export async function persistCheckoutSessionToNeon(input: {
         ${input.shippingMethod},
         ${input.shippingLabel},
         ${Number(input.totalAmountArs.toFixed(2))},
+        ${orderItemsJson}::jsonb,
         ${"iniciado"}
       )
     `;

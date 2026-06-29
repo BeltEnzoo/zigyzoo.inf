@@ -1,4 +1,5 @@
 import { getSql } from "@/lib/db/neon";
+import { runApprovedSaleSideEffects } from "@/lib/payments/approved-sale-effects";
 import {
   mapMercadoPagoPaymentStatus,
   type CheckoutPaymentStatus,
@@ -25,7 +26,11 @@ export async function updateCheckoutPaymentByReference(input: {
       where external_reference = ${input.externalReference}
       returning id
     `;
-    return rows.length > 0;
+    const ok = rows.length > 0;
+    if (ok && input.status === "approved") {
+      void runApprovedSaleSideEffects(input.externalReference);
+    }
+    return ok;
   } catch (e) {
     console.error("[updateCheckoutPaymentByReference]", e);
     return false;
